@@ -8,6 +8,7 @@
 package main
 
 import (
+    //"sync"
     "sync/atomic"
 	"flag"
 	"fmt"
@@ -19,14 +20,16 @@ import (
 )
 
 type Configuration struct {
-	portBase       int
-	portsRange     []int
-	portsRangeSize int
-	tolerance      int
-	generator      combinations.State
-	tuples         int
-	tupleSize      int
-	lastSessionId  uint32         
+	portBase        int
+	portsRange      []int
+	portsRangeSize  int
+	tolerance       int
+	generator       combinations.State
+	tuples          int
+	tupleSize       int
+	lastSessionId   uint32
+	mapSessionPorts map[uint32][][]int        
+	mapPortsSession map[uint64]uint32
 }
 
 // Setup the server configuration accrding to the command line options
@@ -36,6 +39,8 @@ func (configuration *Configuration) init() *Configuration {
 	configuration.tolerance = *flag.Int("tolerance", 20, "an int")
 	configuration.lastSessionId = 0
 	configuration.initCombinationsGenerator()
+	configuration.mapSessionPorts = make(map[uint32][][]int)        
+	configuration.mapPortsSession = make(map[uint64]uint32)
 	return configuration
 }
 
@@ -83,6 +88,7 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 	tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
 	text := tuplesToText(tuples)
 	sessionId := atomic.AddUint32(&configuration.lastSessionId, 1)
+	configuration.mapSessionPorts[sessionId] = tuples 
 	//fmt.Fprintf(response, "Hi there, I love %s!", request.URL.Path[1:])
 	fmt.Fprintf(response, text)
 }
