@@ -15,6 +15,7 @@ import (
 	"log"
 	"net/http"
 	"bytes"
+	"time"
 	"port-knocking-ipc/utils/combinations"
 	"port-knocking-ipc/utils"
 )
@@ -38,6 +39,7 @@ const MaxTupleSize uint64 = 64/MaxPortRangeSizeBits // ports in a tuple
 type SessionId uint32
 type KeyId uint64
 type SessionState struct {
+	expirationTime time.Time
 	tuples [][]int
 }
 
@@ -140,12 +142,17 @@ func keyToTuple(base uint64, key uint64) (tuple []int) {
 	return tuple	
 }
 
+func getExpirationTime() time.Time {
+	const sessionTimeout = 5*1000 //ms
+	expirationTime := time.Now().UTC().Add(time.Millisecond*time.Duration(sessionTimeout))
+	return expirationTime
+}
+
 // Add the session to the map of sessions, all tuples to the map of tuples
 func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 	configuration.mapMutex.Lock()
 	defer configuration.mapMutex.Unlock()
-	
-	configuration.mapSessions[id] = SessionState{tuples}
+	configuration.mapSessions[id] = SessionState{getExpirationTime(), tuples}
 	base := uint64(configuration.portsBase)
 	for _, tuple := range tuples {
 		key := tupleToKey(base, tuple)
