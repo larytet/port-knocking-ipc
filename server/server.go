@@ -143,8 +143,8 @@ func keyToTuple(base uint64, key uint64) (tuple []int) {
 }
 
 func getExpirationTime() time.Time {
-	const sessionTimeout = 5*1000 //ms
-	expirationTime := time.Now().UTC().Add(time.Millisecond*time.Duration(sessionTimeout))
+	const sessionTimeout = time.Duration(10) //s
+	expirationTime := time.Now().UTC().Add(time.Second*sessionTimeout)
 	return expirationTime
 }
 
