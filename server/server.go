@@ -99,17 +99,6 @@ func tuplesToText(tuples [][]int) string {
 	return text.String()
 }
 
-// HTTP server hook
-func (configuration *Configuration) httpHandler(response http.ResponseWriter, request *http.Request) {
-	tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
-	text := tuplesToText(tuples)
-	sessionId := atomic.AddUint32(&configuration.lastSessionId, 1)
-	configuration.mapSessionPorts[sessionId] = tuples 
-	//fmt.Fprintf(response, "Hi there, I love %s!", request.URL.Path[1:])
-	fmt.Fprintf(response, text)
-}
-
-
 // Normalize the ports in the ports tuple by substracting the minimal port number (base)
 // mask the ports numner by  
 // tuple[0] goes to the MSB
@@ -138,6 +127,16 @@ func keyToTuple(base uint64, key uint64) (tuple []int) {
 		key = key << MaxPortRangeSizeBits
 	}
 	return tuple	
+}
+
+// HTTP server hook
+func (configuration *Configuration) httpHandler(response http.ResponseWriter, request *http.Request) {
+	tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
+	text := tuplesToText(tuples)
+	sessionId := atomic.AddUint32(&configuration.lastSessionId, 1)
+	configuration.mapSessionPorts[sessionId] = tuples 
+	//fmt.Fprintf(response, "Hi there, I love %s!", request.URL.Path[1:])
+	fmt.Fprintf(response, text)
 }
 
 func main() {
