@@ -37,6 +37,11 @@ const MaxTupleSize uint64 = 64/MaxPortRangeSizeBits // ports in a tuple
 
 type SessionId uint32
 type KeyId uint64
+type SessionState struct {
+	tuples [][]int
+}
+
+
 type Configuration struct {
 	portsBase        int
 	portsRange      []int
@@ -46,8 +51,8 @@ type Configuration struct {
 	tuples          int
 	tupleSize       int
 	lastSessionId   SessionId
-	mapTuples       map[SessionId][][]int        
-	mapSessions     map[KeyId]SessionId
+	mapSessions     map[SessionId]SessionState        
+	mapTuples       map[KeyId]SessionId
 	// No generics in the Golang? RME. If I want a thread safe map 
 	// 'class' I have to duplicate the code for every map
 	// I will use a single mutex which rules them all 
@@ -61,8 +66,8 @@ func (configuration *Configuration) init() *Configuration {
 	configuration.tolerance = *flag.Int("tolerance", 20, "an int")
 	configuration.lastSessionId = SessionId(0)
 	configuration.initCombinationsGenerator()
-	configuration.mapTuples = make(map[SessionId][][]int)        
-	configuration.mapSessions = make(map[KeyId]SessionId)
+	configuration.mapSessions = make(map[SessionId]SessionState)        
+	configuration.mapTuples = make(map[KeyId]SessionId)
 	return configuration
 }
 
@@ -135,17 +140,16 @@ func keyToTuple(base uint64, key uint64) (tuple []int) {
 	return tuple	
 }
 
-// Add the session to the map of sessions 
-// Add all tuples to the map of tuples
+// Add the session to the map of sessions, all tuples to the map of tuples
 func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 	configuration.mapMutex.Lock()
 	defer configuration.mapMutex.Unlock()
 	
-	configuration.mapTuples[id] = tuples
+	configuration.mapSessions[id] = SessionState{tuples}
 	base := uint64(configuration.portsBase)
 	for _, tuple := range tuples {
 		key := tupleToKey(base, tuple)
-		configuration.mapSessions[KeyId(key)] = id
+		configuration.mapTuples[KeyId(key)] = id
 	}
 }
 
