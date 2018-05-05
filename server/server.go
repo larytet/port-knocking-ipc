@@ -163,8 +163,12 @@ func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 func (configuration *Configuration) rmSession(id SessionId) {
 	configuration.mapMutex.Lock()
 	defer configuration.mapMutex.Unlock()
-	sessionState = configuration.mapSessions[id]
-	tuples = sessionState.tuples
+	sessionState, ok := configuration.mapSessions[id]
+	if !ok {
+		return
+	}
+	tuples := sessionState.tuples
+	base := uint64(configuration.portsBase)
 	for _, tuple := range tuples {
 		key := tupleToKey(base, tuple)
 		_, ok = configuration.mapTuples[key]
