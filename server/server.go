@@ -4,6 +4,19 @@
 // Send the generated XML file to the client
 // If a service connects get the ports and PID from the URL query, look for the file /tmp/PID, compare the data
 // in the file with the ports stored in the dictionary. If there is a match removed the file /tmp/PID
+//
+// Golang's map does not support a key to be a "slice". A key can be olnly fixed size array, string or a structure
+// I am not kidding https://stackoverflow.com/questions/26559568/using-variable-length-array-as-a-map-key-in-golang
+// Lack of generics (don't ask) does not allow me to define an interface supporintg "comparable" 
+// The idea (my speculation) is that the authors intended to force hashtable keys to be an integer or a string, enforce
+// specific designs 
+// The goog news are that uint64 and uint32 keys use a bypass - very fast hashing https://github.com/golang/go/issues/13271
+// I implement two functions which convert between the ports tuples and uint64. This approach introduces limitations:
+// * Complicates use of multiple port ranges 
+// * Limits size of the ports range
+// * Limts number of ports in the ports tuple
+
+
 
 package main
 
@@ -92,6 +105,7 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 	//fmt.Fprintf(response, "Hi there, I love %s!", request.URL.Path[1:])
 	fmt.Fprintf(response, text)
 }
+
 
 func main() {
 	var configuration Configuration 
