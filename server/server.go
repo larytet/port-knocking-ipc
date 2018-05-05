@@ -160,7 +160,7 @@ func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 	}
 }
 
-func (configuration *Configuration) rmSession(id SessionId) {
+func (configuration *Configuration) removeSession(id SessionId) {
 	configuration.mapMutex.Lock()
 	defer configuration.mapMutex.Unlock()
 	sessionState, ok := configuration.mapSessions[id]
