@@ -3,6 +3,7 @@ package main
 import (
 	"testing"
 	"port-knocking-ipc/utils/combinations"
+	"port-knocking-ipc/utils"
 )
 
 
@@ -17,6 +18,16 @@ func TestGenerator(t *testing.T) {
 }
 
 func TestKeyTupleConverter(t *testing.T) {
-	tupleToKey
+	base := uint64(1)
+	expectedTuple := []int{2,3,4,5,6,7,8,9}
+	expectedKey := uint64(0x0102030405060708)
+	key := tupleToKey(base, expectedTuple)
+	if key != expectedKey {
+		t.Errorf("Got '%x' expected '%x'\n", key, expectedKey)
+	}		
+	tuple := keyToTuple(base, key)
+	if !utils.Compare(tuple, expectedTuple) {
+		t.Errorf("Got '%v' expected '%v'\n", tuple, expectedTuple)
+	}		
 }
 
