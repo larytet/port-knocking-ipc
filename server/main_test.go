@@ -17,10 +17,8 @@ func TestGenerator(t *testing.T) {
 	}	
 }
 
-func TestKeyTupleConverter(t *testing.T) {
+func testKeyTupleConverter(t *testing.T, expectedTuple []int, expectedKey KeyId) {
 	base := uint64(1)
-	expectedTuple := []int{2,3,4,5,6,7,8,9}
-	expectedKey := uint64(0x0102030405060708)
 	key := tupleToKey(base, expectedTuple)
 	if key != expectedKey {
 		t.Errorf("Got '%x' expected '%x'\n", key, expectedKey)
@@ -29,5 +27,11 @@ func TestKeyTupleConverter(t *testing.T) {
 	if !utils.Compare(tuple, expectedTuple) {
 		t.Errorf("Got '%v' expected '%v'\n", tuple, expectedTuple)
 	}		
+}
+
+func TestKeyTupleConverter(t *testing.T) {
+	expectedTuple := []int{2,3,4,5,6,7,8,9}
+	expectedKey := KeyId(0x0102030405060708)
+	testKeyTupleConverter(t, expectedTuple, expectedKey)
 }
 
