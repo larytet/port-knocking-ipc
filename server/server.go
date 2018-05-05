@@ -176,7 +176,7 @@ func (configuration *Configuration) removeSession(id SessionId) {
 			delete(configuration.mapTuples, key)
 		}
 	}
-	
+	delete(configuration.mapSessions, id)
 }
 
 // HTTP server hook
