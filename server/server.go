@@ -113,13 +113,15 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 // Normalize the ports in the ports tuple by substracting the minimal port number (base)
 // mask the ports numner by  
 // tuple[0] goes to the MSB
-func tupleToKey(base int, tuple []int) uint64 {
+func tupleToKey(base uint64, tuple []int) uint64 {
 	var key uint64 = 0
 	for  index := uint64(0);index < uint64(len(tuple));index++ {
 		if index >= MaxTupleSize {
 			break
 		}
-		port := uint64(tuple[index]) & MaxPortMask
+		port := uint64(tuple[index]) 
+		port = port - base
+		port = port & MaxPortMask
 		key = key << MaxPortRangeSizeBits 
 		key = key | port
 	}
@@ -127,10 +129,11 @@ func tupleToKey(base int, tuple []int) uint64 {
 }
 
 // Reverse of tupleToKey 
-func keyToTuple(base int, key uint64) (tuple []int) {
+func keyToTuple(base uint64, key uint64) (tuple []int) {
 	for i := uint64(0);i < MaxTupleSize;i++ {
 		port := key & (MaxPortMask << (64-MaxPortRangeSizeBits))
 		port = port >> (64-MaxPortRangeSizeBits)
+		port += base
 		tuple = append(tuple, int(port))
 		key = key << MaxPortRangeSizeBits
 	}
