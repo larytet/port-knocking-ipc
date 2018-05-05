@@ -29,10 +29,11 @@ import (
 // * Complicates use of multiple port ranges 
 // * Limits size of the ports range
 // * Limts number of ports in the ports tuple
-const MaxPortRangeSizeBits = 8 // bits 
-const MaxPortRangeSize = (1 << MaxPortRangeSizeBits)  // ports in a range
-// Number of possible combinations https://www.wolframalpha.com/input/?i=128+choose+8
-const MaxTupleSize = 64/MaxPortRangeSizeBits // ports in a tuple   
+// Number of possible combinations for 8 ports tuple from a range of 128 ports https://www.wolframalpha.com/input/?i=128+choose+8
+const MaxPortRangeSizeBits uint64 = 8 // bits 
+const MaxPortMask uint64 = ((1 << MaxPortRangeSizeBits)-1) 
+const MaxPortRangeSize uint64 = (1 << MaxPortRangeSizeBits)  // ports in a range
+const MaxTupleSize uint64 = 64/MaxPortRangeSizeBits // ports in a tuple   
 
 type Configuration struct {
 	portBase        int
@@ -109,11 +110,31 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 }
 
 
- 
 // Normalize the ports in the ports tuple by substracting the minimal port number (base)
 // mask the ports numner by  
+// tuple[0] goes to the MSB
 func tupleToKey(base int, tuple []int) uint64 {
-	
+	var key uint64 = 0
+	for  index := uint64(0);index < uint64(len(tuple));index++ {
+		if index >= MaxTupleSize {
+			break
+		}
+		port := uint64(tuple[index]) & MaxPortMask
+		key = key << MaxPortRangeSizeBits 
+		key = key | port
+	}
+	return key	
+}
+
+// Reverse of tupleToKey 
+func keyToTuple(base int, key uint64) (tuple []int) {
+	for i := uint64(0);i < MaxTupleSize;i++ {
+		port := key & (MaxPortMask << (64-MaxPortRangeSizeBits))
+		port = port >> (64-MaxPortRangeSizeBits)
+		tuple = append(tuple, int(port))
+		key = key << MaxPortRangeSizeBits
+	}
+	return tuple	
 }
 
 func main() {
