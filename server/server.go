@@ -115,7 +115,7 @@ func tuplesToText(tuples [][]int) string {
 // Normalize the ports in the ports tuple by substracting the minimal port number (base)
 // mask the ports numner by  
 // tuple[0] goes to the MSB
-func tupleToKey(base uint64, tuple []int) uint64 {
+func tupleToKey(base uint64, tuple []int) KeyId {
 	var key uint64 = 0
 	for  index := uint64(0);index < uint64(len(tuple));index++ {
 		if index >= MaxTupleSize {
@@ -127,13 +127,13 @@ func tupleToKey(base uint64, tuple []int) uint64 {
 		key = key << MaxPortRangeSizeBits 
 		key = key | port
 	}
-	return key	
+	return KeyId(key)	
 }
 
 // Reverse of tupleToKey 
-func keyToTuple(base uint64, key uint64) (tuple []int) {
+func keyToTuple(base uint64, key KeyId) (tuple []int) {
 	for i := uint64(0);i < MaxTupleSize;i++ {
-		port := key & (MaxPortMask << (64-MaxPortRangeSizeBits))
+		port := uint64(key) & (MaxPortMask << (64-MaxPortRangeSizeBits))
 		port = port >> (64-MaxPortRangeSizeBits)
 		port += base
 		tuple = append(tuple, int(port))
@@ -156,8 +156,23 @@ func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 	base := uint64(configuration.portsBase)
 	for _, tuple := range tuples {
 		key := tupleToKey(base, tuple)
-		configuration.mapTuples[KeyId(key)] = id
+		configuration.mapTuples[key] = id
 	}
+}
+
+func (configuration *Configuration) rmSession(id SessionId) {
+	configuration.mapMutex.Lock()
+	defer configuration.mapMutex.Unlock()
+	sessionState = configuration.mapSessions[id]
+	tuples = sessionState.tuples
+	for _, tuple := range tuples {
+		key := tupleToKey(base, tuple)
+		_, ok = configuration.mapTuples[key]
+		if ok {
+			delete(configuration.mapTuples, key)
+		}
+	}
+	
 }
 
 // HTTP server hook
