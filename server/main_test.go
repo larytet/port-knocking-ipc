@@ -33,5 +33,9 @@ func TestKeyTupleConverter(t *testing.T) {
 	expectedTuple := []int{2,3,4,5,6,7,8,9}
 	expectedKey := KeyId(0x0102030405060708)
 	testKeyTupleConverter(t, expectedTuple, expectedKey)
+
+	expectedTuple := []int{1,1,1,1,1,1,1,1}
+	expectedKey := KeyId(0x00)
+	testKeyTupleConverter(t, expectedTuple, expectedKey)
 }
 
