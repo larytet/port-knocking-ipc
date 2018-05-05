@@ -19,7 +19,7 @@ func TestGenerator(t *testing.T) {
 
 func TestKeyTupleConverter(t *testing.T) {
 	base := uint64(1)
-	expectedTuple := []int{base+1,base+2,base+3,base+4,base+5,base+6,base+7,base+8}
+	expectedTuple := []int{2,3,4,5,6,7,8,9}
 	expectedKey := uint64(0x0102030405060708)
 	key := tupleToKey(base, expectedTuple)
 	if key != expectedKey {
