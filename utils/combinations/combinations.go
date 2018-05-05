@@ -40,9 +40,11 @@ func Init(source []int, m int) State {
 // Return next unique combination of integers
 func (state *State) Next() []int {
 	state.mutex.Lock()
-	defer state.mutex.Unlock()
 
 	result := state.next()
+	
+	// Save CPU cycles by not usingn defer
+	state.mutex.Unlock()
 	return result	
 }
 
@@ -50,13 +52,15 @@ func (state *State) Next() []int {
 // Wrap around 
 func (state *State) NextWrap() []int {
 	state.mutex.Lock()
-	defer state.mutex.Unlock()
 
 	result := state.next()
 	if result == nil {
 		state.reset()	
 		result = state.next()
-	} 	
+	}
+	 	
+	// Save CPU cycles by not usingn defer
+	state.mutex.Unlock()
 	return result
 }
 

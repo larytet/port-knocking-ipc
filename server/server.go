@@ -8,7 +8,7 @@
 package main
 
 import (
-    //"sync"
+    "sync"
     "sync/atomic"
 	"flag"
 	"fmt"
@@ -35,34 +35,40 @@ const MaxPortMask uint64 = ((1 << MaxPortRangeSizeBits)-1)
 const MaxPortRangeSize uint64 = (1 << MaxPortRangeSizeBits)  // ports in a range
 const MaxTupleSize uint64 = 64/MaxPortRangeSizeBits // ports in a tuple   
 
+type SessionId uint32
+type KeyId uint64
 type Configuration struct {
-	portBase        int
+	portsBase        int
 	portsRange      []int
 	portsRangeSize  int
 	tolerance       int
 	generator       combinations.State
 	tuples          int
 	tupleSize       int
-	lastSessionId   uint32
-	mapSessionPorts map[uint32][][]int        
-	mapPortsSession map[uint64]uint32
+	lastSessionId   SessionId
+	mapTuples       map[SessionId][][]int        
+	mapSessions     map[KeyId]SessionId
+	// No generics in the Golang? RME. If I want a thread safe map 
+	// 'class' I have to duplicate the code for every map
+	// I will use a single mutex which rules them all 
+	mapMutex        sync.Mutex
 }
 
 // Setup the server configuration accrding to the command line options
 func (configuration *Configuration) init() *Configuration {
-	configuration.portBase = *flag.Int("port_base", 21380, "an int")
+	configuration.portsBase = *flag.Int("port_base", 21380, "an int")
 	configuration.portsRangeSize = *flag.Int("port_range", 10, "an int")
 	configuration.tolerance = *flag.Int("tolerance", 20, "an int")
-	configuration.lastSessionId = 0
+	configuration.lastSessionId = SessionId(0)
 	configuration.initCombinationsGenerator()
-	configuration.mapSessionPorts = make(map[uint32][][]int)        
-	configuration.mapPortsSession = make(map[uint64]uint32)
+	configuration.mapTuples = make(map[SessionId][][]int)        
+	configuration.mapSessions = make(map[KeyId]SessionId)
 	return configuration
 }
 
 // Initialize the generation for port combinations 
 func (configuration *Configuration) initCombinationsGenerator() *Configuration {
-	configuration.portsRange  = utils.MakeRange(configuration.portBase, configuration.portsRangeSize)
+	configuration.portsRange  = utils.MakeRange(configuration.portsBase, configuration.portsRangeSize)
 	var portsCount = len(configuration.portsRange)
 	configuration.tupleSize = portsCount/2
 	// I want to allocate enough tuples to reach the specifed tolerance level
@@ -129,12 +135,26 @@ func keyToTuple(base uint64, key uint64) (tuple []int) {
 	return tuple	
 }
 
+// Add the session to the map of sessions 
+// Add all tuples to the map of tuples
+func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
+	configuration.mapMutex.Lock()
+	defer configuration.mapMutex.Unlock()
+	
+	configuration.mapTuples[id] = tuples
+	base := uint64(configuration.portsBase)
+	for _, tuple := range tuples {
+		key := tupleToKey(base, tuple)
+		configuration.mapSessions[KeyId(key)] = id
+	}
+}
+
 // HTTP server hook
 func (configuration *Configuration) httpHandler(response http.ResponseWriter, request *http.Request) {
 	tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
 	text := tuplesToText(tuples)
-	sessionId := atomic.AddUint32(&configuration.lastSessionId, 1)
-	configuration.mapSessionPorts[sessionId] = tuples 
+	sessionId := atomic.AddUint32((*uint32)(&configuration.lastSessionId), 1)
+	configuration.addSession(SessionId(sessionId), tuples) 
 	//fmt.Fprintf(response, "Hi there, I love %s!", request.URL.Path[1:])
 	fmt.Fprintf(response, text)
 }
