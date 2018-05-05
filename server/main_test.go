@@ -29,13 +29,17 @@ func testKeyTupleConverter(t *testing.T, expectedTuple []int, expectedKey KeyId)
 	}		
 }
 
+type KeyTupleConverterTestSet struct {
+	tuple []int
+	key KeyId
+}
 func TestKeyTupleConverter(t *testing.T) {
-	expectedTuple := []int{2,3,4,5,6,7,8,9}
-	expectedKey := KeyId(0x0102030405060708)
-	testKeyTupleConverter(t, expectedTuple, expectedKey)
-
-	expectedTuple = []int{1,1,1,1,1,1,1,1}
-	expectedKey = KeyId(0x00)
-	testKeyTupleConverter(t, expectedTuple, expectedKey)
+	testSets := []KeyTupleConverterTestSet{
+		{[]int{2,3,4,5,6,7,8,9}, KeyId(0x0102030405060708)}
+		{[]int{1,1,1,1,1,1,1,1}, KeyId(0x0000000000000000)}
+	}
+	for testSet := range testSets {
+		testKeyTupleConverter(t, testSet.tuple, testSet.key)
+	}
 }
 
