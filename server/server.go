@@ -64,15 +64,18 @@ type Configuration struct {
 }
 
 // Setup the server configuration accrding to the command line options
-func (configuration *Configuration) init() *Configuration {
-	configuration.portsBase = *flag.Int("port_base", 21380, "an int")
-	configuration.portsRangeSize = *flag.Int("port_range", 10, "an int")
-	configuration.tolerance = *flag.Int("tolerance", 20, "an int")
-	configuration.lastSessionId = SessionId(0)
-	configuration.initCombinationsGenerator()
-	configuration.mapSessions = make(map[SessionId]SessionState)        
-	configuration.mapTuples = make(map[KeyId]SessionId)
-	return configuration
+func createConfiguration() *Configuration {
+	configuration := Configuration{
+		portsBase : *flag.Int("port_base", 21380, "an int"),
+		portsRangeSize : *flag.Int("port_range", 10, "an int"),
+		tolerance : *flag.Int("tolerance", 20, "an int"),
+		lastSessionId : SessionId(0),
+		mapSessions : make(map[SessionId]SessionState),        
+		mapTuples : make(map[KeyId]SessionId),
+	}
+	(&configuration).initCombinationsGenerator()
+	
+	return &configuration
 }
 
 // Initialize the generation for port combinations 
@@ -227,8 +230,7 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 }
 
 func main() {
-	var configuration Configuration 
-	configuration.init()
+	var configuration *Configuration = createConfiguration() 
 	http.HandleFunc("/", configuration.httpHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
