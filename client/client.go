@@ -15,13 +15,28 @@ import (
 	"strconv"
 )
 
-func knock(port int) {
-	host := fmt.Sprintf("127.0.0.1:%d", port)
+// Port knocking 
+func knock(host string) {
 	response, err := http.Get(host)	
 	if err == nil {
 		defer response.Body.Close()
+		text, err := ioutil.ReadAll(response.Body)
+		if err == nil {
+			fmt.Println(text)			
+		} else {
+			fmt.Println(err)			
+		}
+	} else {
+		fmt.Println(err)
 	}	
 } 
+
+func portKnocking(ports []int) {
+	for port := range ports {
+		host := fmt.Sprintf("http://127.0.0.1:%d", port)
+		go knock(host)
+	}	
+}
 
 // Parse string "0,1,2,3,\n0,1,2,4,\n", return [[0,1,2,3], [0,1,2,4]]
 func getPorts(text string) [][]int{
@@ -49,10 +64,10 @@ func handleResponse(text string) {
 	tuples := getPorts(text)
 	for _, tuple := range tuples {
 		for _, port := range tuple {
-			go knock(port)
 			ports = append(ports, port)
 		}	
 	}
+	portKnocking(ports)
 	fmt.Println("Knocking", ports)
 }
 
