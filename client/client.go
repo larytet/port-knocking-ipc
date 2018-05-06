@@ -21,7 +21,6 @@ func knock(port int) {
 	if err == nil {
 		defer response.Body.Close()
 	}	
-	fmt.Println("Knock", port)
 } 
 
 func getPorts(text string) [][]int{
@@ -44,13 +43,15 @@ func getPorts(text string) [][]int{
 }
 
 func handleResponse(text string) {
+	ports := []int{}
 	tuples := getPorts(text)
 	for _, tuple := range tuples {
 		for _, port := range tuple {
-			fmt.Println("Knock", port)
 			go knock(port)
+			ports = append(ports, port)
 		}	
 	}
+	fmt.Println("Knocking", ports)
 }
 
 func main() {
