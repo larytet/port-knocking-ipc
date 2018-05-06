@@ -23,6 +23,7 @@ func knock(port int) {
 	}	
 } 
 
+// Parse string "0,1,2,3,\n0,1,2,4,\n", return [[0,1,2,3], [0,1,2,4]]
 func getPorts(text string) [][]int{
 	tuplesStr := strings.Split(text, "\n")
 	tuples := [][]int{}
@@ -42,6 +43,7 @@ func getPorts(text string) [][]int{
 	return tuples
 }
 
+// Spawn goroutines to knock the ports specified in the server response 
 func handleResponse(text string) {
 	ports := []int{}
 	tuples := getPorts(text)
