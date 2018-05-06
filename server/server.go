@@ -69,9 +69,9 @@ type Configuration struct {
 // Setup the server configuration accrding to the command line options
 func createConfiguration() *Configuration {
 	configuration := Configuration{
-		portsBase : *flag.Int("port_base", 21380, "an int"),
-		portsRangeSize : *flag.Int("port_range", 10, "an int"),
-		tolerance : *flag.Int("tolerance", 20, "an int"),
+		portsBase : *flag.Int("port_base", 21380, "Base port number"),
+		portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
+		tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
 		lastSessionId : SessionId(0),
 		mapSessions : make(map[SessionId]SessionState),        
 		mapTuples : make(map[KeyId]SessionId),
@@ -303,7 +303,6 @@ func (configuration *Configuration) httpHandlerSession(response http.ResponseWri
 
 // Allocate combinations of ports (ports tuples), generate response text, update the sessions map 
 func (configuration *Configuration) httpHandlerRoot(response http.ResponseWriter, query url.Values) {
-	configuration.httpHandlerRoot(response, query)
 	tuples := getPortsCombinations(&configuration.generator, configuration.tuples, 2)
 	sessionId := atomic.AddUint32((*uint32)(&configuration.lastSessionId), 1)
 	configuration.addSession(SessionId(sessionId), tuples) 
