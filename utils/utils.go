@@ -1,6 +1,7 @@
 package utils
 
 import (
+    "strconv"
 	"strings"
 	"fmt"
 	"runtime/debug"
@@ -59,3 +60,31 @@ func PrintStack() {
 	debug.PrintStack()
 }
 
+func AtoPid(s string) (int, bool) {
+	pid, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, false
+	}	
+	if pid <= 0 {
+		return 0, false
+	}		
+	// Linux PID is 20 bits?
+	if pid >= 0xFFFFFF {
+		return 0, false
+	}		
+	return pid, true
+}
+
+func AtoIpPort(s string) (int, bool) {
+	port,  err := strconv.Atoi(s)
+	if err != nil {
+		return 0, false
+	}
+	if port < 0 {
+		return 0, false
+	}		
+	if port >= 0xFFFF {
+		return 0, false
+	}		
+	return port, true
+}

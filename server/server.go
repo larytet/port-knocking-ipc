@@ -9,9 +9,11 @@ package main
 
 import (
     "sync"
+    "strings"
     //"regexp"
     "sync/atomic"
     "net/url"
+    "math/rand"
 	"flag"
 	"fmt"
 	"log"
@@ -41,6 +43,7 @@ const MaxTupleSize uint64 = 64/MaxPortRangeSizeBits // ports in a tuple
 type SessionId uint32
 type KeyId uint64
 type SessionState struct {
+	id SessionId
 	expirationTime time.Time
 	tuples [][]int
 }
@@ -96,12 +99,17 @@ func (configuration *Configuration) initCombinationsGenerator() *Configuration {
 }
 
 // Get next set of port combinations
-func getPortsCombinations(generator *combinations.State, count int) ([][]int) {
+// Randomly skip combinations with the specified probabilty   
+func getPortsCombinations(generator *combinations.State, count int, skipProbability int) ([][]int) {
 	tuples := make([][]int, 0)
-	for i := 0;i < count;i++ {
-		// I have to clone the slice generator.Next() returns the same reference
-		tuple := generator.NextWrap()
-		tuples = append(tuples, tuple)
+	for count > 0 {
+		toSkip := (skipProbability > 0) && (rand.Intn(100) < skipProbability)
+		if !toSkip {
+			// I have to clone the slice generator.Next() returns the same reference
+			tuple := generator.NextWrap()
+			tuples = append(tuples, tuple)
+			count -= 1
+		}
 	}
 	return tuples
 }
@@ -158,7 +166,7 @@ func getExpirationTime() time.Time {
 func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 	configuration.mapMutex.Lock()
 	defer configuration.mapMutex.Unlock()
-	configuration.mapSessions[id] = SessionState{getExpirationTime(), tuples}
+	configuration.mapSessions[id] = SessionState{id, getExpirationTime(), tuples}
 	base := uint64(configuration.portsBase)
 	for _, tuple := range tuples {
 		key := tupleToKey(base, tuple)
@@ -166,53 +174,139 @@ func (configuration *Configuration) addSession(id SessionId, tuples [][]int) {
 	}
 }
 
-func (configuration *Configuration) removeSession(id SessionId) {
+func (configuration *Configuration) removeSession(id SessionId) (tuples, tuplesRemoved [][]int, ok bool) {
 	configuration.mapMutex.Lock()
 	defer configuration.mapMutex.Unlock()
 	sessionState, ok := configuration.mapSessions[id]
 	if !ok {
-		return
+		return nil, nil, false
 	}
-	tuples := sessionState.tuples
+	tuples = sessionState.tuples
+	tuplesRemoved = [][]int{}
 	base := uint64(configuration.portsBase)
 	for _, tuple := range tuples {
 		key := tupleToKey(base, tuple)
 		_, ok = configuration.mapTuples[key]
 		if ok {
 			delete(configuration.mapTuples, key)
+			tuplesRemoved = append(tuplesRemoved, tuple)
 		}
 	}
 	delete(configuration.mapSessions, id)
+	return tuples, tuplesRemoved, true
 }
 
 func parseUrlQuerySessionPorts(portsStr []string, tupleSize int) ([][]int, bool) {
+	if len(portsStr) != 1 {
+		return nil, false
+	}
+	portsStrs := strings.Split(portsStr[0], ",")
+	if len(portsStrs) < 1 {
+		return nil, false
+	}
+	portsStrs = portsStrs[:len(portsStrs)-1]
+	if len(portsStrs) < 1 {
+		return nil, false
+	}
 	var ports [][]int
+	portsCount := 0
+	for _, portStr := range portsStrs {
+		if portsCount % tupleSize == 0 {
+			ports = append(ports, []int{})			
+		}		
+		port, ok := utils.AtoIpPort(portStr)
+		if !ok {
+			return nil, false
+		}
+		tupleIndex := portsCount/tupleSize
+		ports[tupleIndex] = append(ports[tupleIndex], port)
+		portsCount += 1
+	}
 	return ports, true
 }
 
-func parseUrlQuerySessionPid(portsStr []string) (int, bool) {
-	return 0, true
+func parseUrlQuerySessionPid(pidStr []string) (int, bool) {
+	if len(pidStr) != 1 {
+		return 0, false 
+	}
+	pid,  ok := utils.AtoPid(pidStr[0])
+	if !ok {
+		return 0, false 		
+	}
+	return pid, true
+}
+
+// Look for all tuples in the map, collect session IDs
+// Number of sessions can be any positive number, can be zero.
+// The tuples can match more than one session if, for example, the client 
+// has failed to bind all ports  
+func (configuration *Configuration) findSessions(tuples [][]int) []SessionState {
+	sessions := []SessionState{}
+	for _, tuple := range tuples {
+		key := tupleToKey(uint64(configuration.portsBase), tuple)
+		sessionId, ok := configuration.mapTuples[key]
+		if ok {
+			session, ok := configuration.mapSessions[sessionId]
+			if ok {
+				sessions = append(sessions, session) 
+			} 
+		}
+	}
+	return sessions
 }
 
 // Handle URL quries
 func (configuration *Configuration) httpHandlerSession(response http.ResponseWriter, query url.Values) {
 	portsStr, ok := query["ports"]
 	if !ok {
+		fmt.Fprintf(response, "No parameter 'ports'")
 		return
 	}
-	pidStr, ok := query["pid"] 
+	pidStr, ok := query["pid"]
 	if !ok {
+		fmt.Fprintf(response, "No parameter 'pid'")
 		return
 	}
-	ports, ok := parseUrlQuerySessionPorts(portsStr, configuration.tupleSize)
+	tuples, ok := parseUrlQuerySessionPorts(portsStr, configuration.tupleSize)
 	if !ok {
+		fmt.Fprintf(response, "Failed to parse '%s'", tuples)
 		return
 	}
 	pid, ok := parseUrlQuerySessionPid(pidStr)
 	if !ok {
+		fmt.Fprintf(response, "Failed to parse '%s'", pidStr)
 		return
 	}
-	fmt.Println(ports, pid)
+	sessions := configuration.findSessions(tuples)
+	if len(sessions) == 0 {
+		fmt.Fprintf(response, "No session is found for %v, pid %d", tuples, pid)
+		return
+	}
+	if len(sessions) > 1 {
+		fmt.Fprintf(response, "Found %v (%d) sessions for tuples %v, pid %d", sessions, len(sessions), tuples, pid)
+		return
+	}
+	session := sessions[0]
+	tuples, tuplesRemoved, ok := configuration.removeSession(session.id)
+	if !ok {
+		fmt.Fprintf(response, "Failed to remove sesion %v for %v, pid %d", session, tuples, pid)
+		return
+	}
+	if len(tuples) != len(tuplesRemoved) {
+		fmt.Fprintf(response, "Failed to remove all tuples for %v, tuples=%v, removed=%v, pid=%d", session, tuples, tuplesRemoved, pid)
+		return
+	}
+	fmt.Fprintf(response, "Removed tuples for session %v, pid %d", session, pid)
+}
+
+// Allocate combinations of ports (ports tuples), generate response text, update the sessions map 
+func (configuration *Configuration) httpHandlerRoot(response http.ResponseWriter, query url.Values) {
+	configuration.httpHandlerRoot(response, query)
+	tuples := getPortsCombinations(&configuration.generator, configuration.tuples, 2)
+	sessionId := atomic.AddUint32((*uint32)(&configuration.lastSessionId), 1)
+	configuration.addSession(SessionId(sessionId), tuples) 
+	text := tuplesToText(tuples)
+	fmt.Fprintf(response, text)
 }
 
 // HTTP server hook
@@ -222,15 +316,12 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 	if path == "session" {
 		configuration.httpHandlerSession(response, query)
 	} else {
-		tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
-		text := tuplesToText(tuples)
-		sessionId := atomic.AddUint32((*uint32)(&configuration.lastSessionId), 1)
-		configuration.addSession(SessionId(sessionId), tuples) 
-		fmt.Fprintf(response, text)
+		configuration.httpHandlerRoot(response, query)
 	}
 }
 
 func main() {
+	rand.Seed((int64)(time.Millisecond))
 	var configuration *Configuration = createConfiguration() 
 	http.HandleFunc("/", configuration.httpHandler)
 	log.Fatal(http.ListenAndServe(":8080", nil))

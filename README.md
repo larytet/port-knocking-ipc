@@ -15,6 +15,10 @@ Some applications:
 
 The server generates a combination of ports from a predefined port range. The server generates an HTML page which establishes connections to the WEB server running on the local host (127.0.0.1). The service listens for the connection attempts, sorts the "knocks" by process ID. The service closes the connections. The service sends the collected "knocks" to the server with the required information. The server can response with further instructions. 
 
+## Limitations
+
+The server is susceptible to the replay attacks. For example an adversary can constantly send a query with a specific port combination until it gets a positive response from the server. The server can introduce "holes" when choosing ports combinations by skipping a random number of combinations.     
+
 ## Tolerance for failures to bind ports
  
 The suggested scheme allows the service to tolerate failure to bind some of the ports in the predefined range. The idea is that if the service failed to bind a port it will send all possible combinations of the collected "knocks" and the ports the service failed to bind.

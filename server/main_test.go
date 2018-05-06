@@ -9,7 +9,7 @@ import (
 
 func TestGenerator(t *testing.T) {
 	var generator = combinations.Init(([]int{0,1,2,3})[:], 2)
-	var tuples = getPortsCombinations(&generator, 2)
+	var tuples = getPortsCombinations(&generator, 2, 0)
 	var text = tuplesToText(tuples)
 	var expectedText = "0,1\n0,2\n"
 	if text != expectedText {
@@ -44,3 +44,66 @@ func TestKeyTupleConverter(t *testing.T) {
 		testKeyTupleConverter(t, testSet.tuple, testSet.key)
 	}
 }
+
+type ParseUrlQuerySessionPortsTestSet struct {
+	portsStr []string
+	tupleSize int
+	ports [][]int
+	ok bool
+}
+
+// Warning! Test the method which handles URL parsing 
+func TestParseUrlQuerySessionPorts(t *testing.T) {
+	testSets := []ParseUrlQuerySessionPortsTestSet {
+		{[]string{"0,1,2,3,"}, int(4), [][]int{{0,1,2,3,}, }, bool(true)},
+		{[]string{""}, int(4), [][]int(nil), bool(false)},
+		{[]string{"0,-1,2,3"}, int(4), [][]int(nil), bool(false)},
+		{[]string{"0,0x1FFFF,2,3"}, int(4), [][]int(nil), bool(false)},
+		{[]string(nil), int(4), [][]int(nil), bool(false)},
+	}
+	
+	for testIndex, testSet := range testSets {
+		tuples, ok := parseUrlQuerySessionPorts(testSet.portsStr, testSet.tupleSize)
+		if ok != testSet.ok {
+			t.Errorf("Got ok '%t' expected '%t' for test %d\n", ok, testSet.ok, testIndex)			
+		}
+		for i := 0;i < len(tuples);i++ {
+			if !utils.Compare(tuples[i], testSet.ports[i]) {
+				t.Errorf("Got ports '%v' expected '%v for test %d'\n", tuples, testSet.ports, testIndex)
+			}			
+		} 
+	}
+}
+
+type ParseUrlQuerySessionPidSet struct {
+	pidStr []string
+	pid int
+	ok bool
+}
+
+// Warning! Test the method which handles URL parsing 
+func TestParseUrlQuerySessionPid(t *testing.T) {
+	testSets := []ParseUrlQuerySessionPidSet {
+		{[]string{"1"}, int(1), bool(true)},
+		{[]string{"-1"}, int(0), bool(false)},
+		{[]string{"0"}, int(0), bool(false)},
+		{[]string{"9999999999999999999999999999999999999999999999999999999999999999999999999"}, int(0), bool(false)},
+		{[]string{"a1"}, int(0), bool(false)},
+		{[]string{" "}, int(0), bool(false)},
+		{[]string{""}, int(0), bool(false)},
+		{[]string{"1", "2"}, int(0), bool(false)},
+		{[]string(nil), int(0), bool(false)},
+	}
+	
+	for testIndex, testSet := range testSets {
+		pid, ok := parseUrlQuerySessionPid(testSet.pidStr)
+		if ok != testSet.ok {
+			t.Errorf("Got ok '%t' expected '%t' for test %d\n", ok, testSet.ok, testIndex)			
+		}
+		if pid != testSet.pid {
+			t.Errorf("Got pid '%d' expected '%d' for test %d\n", pid, testSet.pid, testIndex)			
+		}
+	}
+}
+
+
