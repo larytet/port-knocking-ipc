@@ -84,9 +84,8 @@ func createPidFile(ports []int) (string, bool) {
 // Wait until "server" removes the file
 func waitForPidfile(filename string) bool {
 	timeout := time.Duration(10*1000)
-	check_period := time.Duration(100)
-	 
-	for period := timeout/check_period;!utils.PathExists(filename) && period > 0; period -= 1 {
+	check_period := time.Duration(100)	 
+	for loops := timeout/check_period;!utils.PathExists(filename) && loops > 0; loops -= 1 {
 		time.Sleep(check_period * time.Millisecond)
 	}	
 	return !utils.PathExists(filename)

@@ -51,8 +51,22 @@ func closeListeners(listeners []net.Listener) {
 	}
 }
 
+func handleAccept(listener net.Listener) {
+	defer listener.Close()	
+    for {
+            c, err := l.Accept()
+            if err != nil {
+                log.Fatal(err)
+            }
+            fmt.Println("New connection found!")
+            go listenConnection(c)
+    }
+}
+
 func main() {
 	ports := getPortsToBind()
 	listeners := bindPorts(ports)
-	defer closeListeners(listeners)	
+	for _, listener := range listeners {
+		go handleAccept(listener)
+	}		
 }
