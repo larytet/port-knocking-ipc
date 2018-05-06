@@ -2,10 +2,10 @@
 // for simulaiton of failure of bind
 // Bind the specified ports
 // Wait for TCP connections from a client
-// Accept connection, collect the port number and the client PID
+// Accept connection, collect the port number, figure out the client PID
 // When the required number of ports are knocked or a timeout expired send  
-// all possible combinations of the collected port knocks and ports the service 
-// failed to bind to the server
+// all possible combinations of the collected port knocks and the ports 
+// the service failed to bind to the server
  
 package main
 
@@ -14,7 +14,8 @@ import (
 	"fmt"
 	"flag"
 	"time"
-//	"os"
+	"os/exec"
+	"bytes"
 //	"port-knocking-ipc/utils"
 )
 
@@ -47,6 +48,21 @@ func bindPorts(ports []int) []net.Listener{
 	return listeners	
 }
 
+func getPid(port int) (pid int, ok bool) {
+	command := exec.Command("netstat", "-npl")
+	var out bytes.Buffer
+	command.Stdout = &out
+	err := command.Run()
+	if err == nil {
+		output := out.String()
+		fmt.Println("Got", output)
+		return 0, true		 	
+	} else {
+		fmt.Println("Failed to start nestat:", err)
+		return 0, false		 	
+	}
+}
+
 // Goroutine to accept incoming connection
 func handleAccept(listener net.Listener) {
 	defer listener.Close()	
@@ -58,7 +74,14 @@ func handleAccept(listener net.Listener) {
 		defer connection.Close()
 		fmt.Println("New connection found!")
 		remoteAddress := connection.RemoteAddr()
-		fmt.Println(remoteAddress)
+		port := remoteAddress.(*net.TCPAddr).Port
+		fmt.Println("Port", port)
+		getPid(port)
+		//port, err := strconv.Atoi(strings.Split(remoteAddress,":")[1])
+		//if err == nil {
+		//} else {
+		//	fmt.Println("Failed to get port number from remoteAddress:", err)
+		//} 
 	}
 }
 
