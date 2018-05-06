@@ -36,11 +36,11 @@ func knock(host string) {
 } 
 
 // Port knocking - send HTTP GET for the specified ports on the localhost
-// Unblocking 
+// This is a blocking operation 
 func portKnocking(ports []int) {
 	for port := range ports {
 		host := fmt.Sprintf("http://127.0.0.1:%d", port)
-		go knock(host)
+		knock(host)
 	}	
 }
 

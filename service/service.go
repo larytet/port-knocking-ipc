@@ -31,11 +31,12 @@ type Knocks struct {
 	state map[int]*KnockingState
 }
 
-var knocks Knocks
+var knocks = Knocks{state: make(map[int]*KnockingState)}
  
 func (knocks *Knocks) addKnock(pid int, port int) {
-	const timeout = time.Duration(2) //s
-	expirationTime := time.Now().UTC().Add(time.Second*timeout)
+	const timeout = time.Duration(10) //s
+	now := time.Now().UTC()
+	expirationTime := now.Add(time.Second*timeout)
 	
 	knocks.mutex.Lock()
 	defer knocks.mutex.Unlock()
@@ -43,7 +44,11 @@ func (knocks *Knocks) addKnock(pid int, port int) {
 	if !ok {
 		state = &KnockingState{ []int{}, expirationTime } 
 		knocks.state[pid] = state 
-	} 
+	}
+	if state.expirationTime.Before(now) {
+		fmt.Println("Knocks for", pid, "expired")
+		state = &KnockingState{ []int{}, expirationTime } 
+	}
 	state.ports = append(state.ports, port)
 	state.expirationTime = expirationTime
 	fmt.Println("Collected for", pid, state.ports)
@@ -79,24 +84,24 @@ func bindPorts(ports []int) []net.Listener{
 }
 
 // I am looking for line like 
-// "tcp6       0      0 :::21380                :::*                    LISTEN      27581/service"
+// "tcp        0      0 127.0.0.1:36518         127.0.0.1:21380         ESTABLISHED 26396/firefox  "
 // In the output of the 'netstat'
 func getPid(port int) (pid int, ok bool) {
-	command := exec.Command("netstat", "-npl")
+	command := exec.Command("netstat", "-ntp")
 	var out bytes.Buffer
 	command.Stdout = &out
 	err := command.Run()
 	if err == nil {
 		output := strings.Split(out.String(), "\n")
-		re := regexp.MustCompile(fmt.Sprintf("tcp.+:::%d.+LISTEN\\s+([0-9]+)/\\S+", port))
+		re := regexp.MustCompile(fmt.Sprintf("tcp\\s+\\S+\\s+\\S+\\s+\\S+:%d.+ESTABLISHED\\s+([0-9]+)/(\\S+)", port))
 		for _, line := range output {
 			 match := re.FindStringSubmatch(line)
 			 if len(match) > 0 {
-			 	pid, ok := utils.AtoPid(match[0])
+			 	pid, ok := utils.AtoPid(match[1])
 			 	return pid, ok
 			 }
 		} 
-		fmt.Println("Failed to match port", port)
+		fmt.Println("Failed to match port", port, out.String())
 		return 0, false		 	
 	} else {
 		fmt.Println("Failed to start nestat:", err)
@@ -117,7 +122,7 @@ func handleAccept(listener net.Listener) {
 		port := remoteAddress.(*net.TCPAddr).Port
 		fmt.Println("New connection port", port)
 		pid, ok := getPid(port)
-		if ok {
+		if ok {			
 			knocks.addKnock(pid, port)
 		} else {
 			fmt.Println("Failed to recover pid for port", port)			
@@ -132,6 +137,6 @@ func main() {
 		go handleAccept(listener)
 	}
 	for {
-		time.Sleep(100)
+		time.Sleep(100 * time.Millisecond)
 	}		
 }
