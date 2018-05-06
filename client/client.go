@@ -15,7 +15,7 @@ import (
 	"strconv"
 )
 
-// Port knocking 
+// Send HTTP GET to the host
 func knock(host string) {
 	response, err := http.Get(host)	
 	if err == nil {
@@ -31,6 +31,7 @@ func knock(host string) {
 	}	
 } 
 
+// Port knocking - send HTTP GET for the specified ports on the localhost 
 func portKnocking(ports []int) {
 	for port := range ports {
 		host := fmt.Sprintf("http://127.0.0.1:%d", port)
