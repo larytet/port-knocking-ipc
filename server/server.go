@@ -99,7 +99,9 @@ func (configuration *Configuration) initCombinationsGenerator() *Configuration {
 }
 
 // Get next set of port combinations
-// Randomly skip combinations with the specified probabilty   
+// Randomly skip combinations with the specified probabilty. I do the skipping part
+// to thwart replay attacks. The idea is that the server will only rarely repeat  
+// allocated combinations. TODO More thinking is required here
 func getPortsCombinations(generator *combinations.State, count int, skipProbability int) ([][]int) {
 	tuples := make([][]int, 0)
 	for count > 0 {
