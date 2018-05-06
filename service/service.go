@@ -25,6 +25,7 @@ import (
 type KnockingState struct {
 	ports []int
 	expirationTime time.Time
+	pid int
 }
 type Knocks struct {
 	mutex sync.Mutex
@@ -33,25 +34,21 @@ type Knocks struct {
 
 var knocks = Knocks{state: make(map[int]*KnockingState)}
  
-func (knocks *Knocks) addKnock(pid int, port int) {
-	const timeout = time.Duration(10) //s
-	now := time.Now().UTC()
-	expirationTime := now.Add(time.Second*timeout)
+func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
+	const timeout = time.Duration(5) //s
+	expirationTime := time.Now().UTC().Add(time.Second*timeout)
 	
 	knocks.mutex.Lock()
 	defer knocks.mutex.Unlock()
 	state, ok := knocks.state[pid]
 	if !ok {
-		state = &KnockingState{ []int{}, expirationTime } 
+		state = &KnockingState{ []int{}, expirationTime, int(pid) } 
 		knocks.state[pid] = state 
-	}
-	if state.expirationTime.Before(now) {
-		fmt.Println("Knocks for", pid, "expired")
-		state = &KnockingState{ []int{}, expirationTime } 
 	}
 	state.ports = append(state.ports, port)
 	state.expirationTime = expirationTime
 	fmt.Println("Collected for", pid, state.ports)
+	return state
 }
 
 func getPortsToBind() []int{
@@ -109,6 +106,45 @@ func getPid(port int) (pid int, ok bool) {
 	}
 }
 
+func isCompleted(state *KnockingState) bool {
+	if state.expirationTime.Before(time.Now().UTC()) {
+		return true 
+	}
+	portsRangeSize := *flag.Int("port_range", 10, "Size of the ports range")
+	tolerance := *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures")
+	tupleSize := portsRangeSize/2
+	// I want to allocate enough tuples to reach the specifed tolerance level
+	tuples := (tolerance*tupleSize)/100 + 2
+	if tolerance == 0 {
+		tuples = 1		
+	}  
+	if len(state.ports) % (tuples*tupleSize) == 0{
+		return true
+	}
+	return false
+}
+
+func sendQueryToServer(pid int, ports []int) {
+}
+
+func completeKnocks() {
+	knocks.mutex.Lock()
+	defer knocks.mutex.Unlock()
+	
+	completedKnocks := []*KnockingState{}
+	for _, state := range knocks.state {
+		if isCompleted(state) {
+			completedKnocks = append(completedKnocks, state)
+		}
+	}
+	for _, state := range completedKnocks {
+		delete(knocks.state, state.pid)
+		sendQueryToServer(state.pid, state.ports)
+	}
+	time.Sleep(1 * time.Second)
+}
+
+
 // Goroutine to accept incoming connection
 func handleAccept(listener net.Listener) {
 	defer listener.Close()	
@@ -123,7 +159,11 @@ func handleAccept(listener net.Listener) {
 		fmt.Println("New connection port", port)
 		pid, ok := getPid(port)
 		if ok {			
-			knocks.addKnock(pid, port)
+			state := knocks.addKnock(pid, port)
+			if isCompleted(state) {
+				delete(knocks.state, state.pid)
+				sendQueryToServer(state.pid, state.ports)
+			}
 		} else {
 			fmt.Println("Failed to recover pid for port", port)			
 		}
@@ -136,6 +176,7 @@ func main() {
 	for _, listener := range listeners {
 		go handleAccept(listener)
 	}
+	go completeKnocks()
 	for {
 		time.Sleep(100 * time.Millisecond)
 	}		

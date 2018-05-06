@@ -84,8 +84,7 @@ func createConfiguration() *Configuration {
 // Initialize the generation for port combinations 
 func (configuration *Configuration) initCombinationsGenerator() *Configuration {
 	configuration.portsRange  = utils.MakeRange(configuration.portsBase, configuration.portsRangeSize)
-	var portsCount = len(configuration.portsRange)
-	configuration.tupleSize = portsCount/2
+	configuration.tupleSize = configuration.portsRangeSize/2
 	// I want to allocate enough tuples to reach the specifed tolerance level
 	configuration.tuples = (configuration.tolerance*configuration.tupleSize)/100 + 2
 	if configuration.tolerance == 0 {
