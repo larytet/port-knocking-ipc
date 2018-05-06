@@ -81,6 +81,17 @@ func createPidFile(ports []int) (string, bool) {
 	return pidFilename, true
 }
 
+// Wait until "server" removes the file
+func waitForPidfile(filename string) {
+	timeout := time.Duration(10*1000)
+	check_period := time.Duration(100)
+	period := timeout/check_period 
+	for !utils.PathExists(filename) && period > 0 {
+		time.Sleep(check_period * time.Millisecond)
+		period -= 1			
+	}	
+}
+
 // Spawn goroutines to knock the ports specified in the server response 
 func handleResponse(text string) {
 	ports := []int{}
@@ -93,14 +104,8 @@ func handleResponse(text string) {
 	// portKnockig() does not block
 	portKnocking(ports)
 	pidFilename, ok := createPidFile(ports)
-	timeout := time.Duration(10*1000)
-	check_period := time.Duration(100)
-	period := timeout/check_period 
 	if ok {
-		for !utils.PathExists(pidFilename) && period > 0 {
-			time.Sleep(check_period * time.Millisecond)
-			period -= 1			
-		}
+		waitForPidfile(pidFilename)
 	}
 }
 
