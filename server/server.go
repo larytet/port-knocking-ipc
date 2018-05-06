@@ -184,6 +184,9 @@ func (configuration *Configuration) removeSession(id SessionId) {
 
 // Handle URL quries
 func (configuration *Configuration) httpHandlerQuery(response http.ResponseWriter, query string, match [][]string) {
+	for s := range match {
+		fmt.Println(s)
+	}
 }
 
 // HTTP server hook
@@ -199,7 +202,6 @@ func (configuration *Configuration) httpHandler(response http.ResponseWriter, re
 		configuration.addSession(SessionId(sessionId), tuples) 
 		fmt.Fprintf(response, text)
 	}
-	 
 }
 
 func main() {
