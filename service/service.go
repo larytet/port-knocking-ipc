@@ -96,7 +96,7 @@ func getPid(port int) (pid int, ok bool) {
 			 	return pid, ok
 			 }
 		} 
-		fmt.Println("Failed to match port", port, "in", output)
+		fmt.Println("Failed to match port", port)
 		return 0, false		 	
 	} else {
 		fmt.Println("Failed to start nestat:", err)
@@ -113,10 +113,9 @@ func handleAccept(listener net.Listener) {
 			fmt.Println("Accept failed", err)
 		}
 		defer connection.Close()
-		fmt.Println("New connection found!")
 		remoteAddress := connection.RemoteAddr()
 		port := remoteAddress.(*net.TCPAddr).Port
-		fmt.Println("Port", port)
+		fmt.Println("New connection port", port)
 		pid, ok := getPid(port)
 		if ok {
 			knocks.addKnock(pid, port)
