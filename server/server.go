@@ -10,7 +10,6 @@ package main
 import (
     "sync"
     "strings"
-    //"regexp"
     "sync/atomic"
     "net/url"
     "math/rand"

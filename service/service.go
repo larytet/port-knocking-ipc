@@ -14,10 +14,40 @@ import (
 	"fmt"
 	"flag"
 	"time"
+	"regexp"
 	"os/exec"
 	"bytes"
-//	"port-knocking-ipc/utils"
+	"strings"
+	"sync"
+	"port-knocking-ipc/utils"
 )
+
+type KnockingState struct {
+	ports []int
+	expirationTime time.Time
+}
+type Knocks struct {
+	mutex sync.Mutex
+	state map[int]*KnockingState
+}
+
+var knocks Knocks
+ 
+func (knocks *Knocks) addKnock(pid int, port int) {
+	const timeout = time.Duration(2) //s
+	expirationTime := time.Now().UTC().Add(time.Second*timeout)
+	
+	knocks.mutex.Lock()
+	defer knocks.mutex.Unlock()
+	state, ok := knocks.state[pid]
+	if !ok {
+		state = &KnockingState{ []int{}, expirationTime } 
+		knocks.state[pid] = state 
+	} 
+	state.ports = append(state.ports, port)
+	state.expirationTime = expirationTime
+	fmt.Println("Collected for", pid, state.ports)
+}
 
 func getPortsToBind() []int{
 	portsBase := *flag.Int("port_base", 21380, "Base port number")
@@ -48,15 +78,26 @@ func bindPorts(ports []int) []net.Listener{
 	return listeners	
 }
 
+// I am looking for line like 
+// "tcp6       0      0 :::21380                :::*                    LISTEN      27581/service"
+// In the output of the 'netstat'
 func getPid(port int) (pid int, ok bool) {
 	command := exec.Command("netstat", "-npl")
 	var out bytes.Buffer
 	command.Stdout = &out
 	err := command.Run()
 	if err == nil {
-		output := out.String()
-		fmt.Println("Got", output)
-		return 0, true		 	
+		output := strings.Split(out.String(), "\n")
+		re := regexp.MustCompile(fmt.Sprintf("tcp.+:::%d.+LISTEN\\s+([0-9]+)/\\S+", port))
+		for _, line := range output {
+			 match := re.FindStringSubmatch(line)
+			 if len(match) > 0 {
+			 	pid, ok := utils.AtoPid(match[0])
+			 	return pid, ok
+			 }
+		} 
+		fmt.Println("Failed to match port", port, "in", output)
+		return 0, false		 	
 	} else {
 		fmt.Println("Failed to start nestat:", err)
 		return 0, false		 	
@@ -76,12 +117,12 @@ func handleAccept(listener net.Listener) {
 		remoteAddress := connection.RemoteAddr()
 		port := remoteAddress.(*net.TCPAddr).Port
 		fmt.Println("Port", port)
-		getPid(port)
-		//port, err := strconv.Atoi(strings.Split(remoteAddress,":")[1])
-		//if err == nil {
-		//} else {
-		//	fmt.Println("Failed to get port number from remoteAddress:", err)
-		//} 
+		pid, ok := getPid(port)
+		if ok {
+			knocks.addKnock(pid, port)
+		} else {
+			fmt.Println("Failed to recover pid for port", port)			
+		}
 	}
 }
 
