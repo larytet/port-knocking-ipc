@@ -73,9 +73,10 @@ func createConfiguration() *Configuration {
 		mapSessions : make(map[SessionId]SessionState),        
 		mapTuples : make(map[KeyId]SessionId),
 	}
-	(&configuration).initCombinationsGenerator()
+	result := &configuration
+	result.initCombinationsGenerator()
 	
-	return &configuration
+	return result
 }
 
 // Initialize the generation for port combinations 
