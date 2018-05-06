@@ -187,6 +187,8 @@ func (configuration *Configuration) httpHandlerQuery(response http.ResponseWrite
 	for s := range match {
 		fmt.Println(s)
 	}
+	
+	
 }
 
 // HTTP server hook
