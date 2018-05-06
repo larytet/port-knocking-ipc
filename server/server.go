@@ -9,6 +9,7 @@ package main
 
 import (
     "sync"
+    "regexp"
     "sync/atomic"
 	"flag"
 	"fmt"
@@ -179,14 +180,24 @@ func (configuration *Configuration) removeSession(id SessionId) {
 	delete(configuration.mapSessions, id)
 }
 
+// Handle URL quries
+func (configuration *Configuration) httpHandlerQuery(response http.ResponseWriter, query *string) {
+}
+
 // HTTP server hook
 func (configuration *Configuration) httpHandler(response http.ResponseWriter, request *http.Request) {
-	tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
-	text := tuplesToText(tuples)
-	sessionId := atomic.AddUint32((*uint32)(&configuration.lastSessionId), 1)
-	configuration.addSession(SessionId(sessionId), tuples) 
-	//fmt.Fprintf(response, "Hi there, I love %s!", request.URL.Path[1:])
-	fmt.Fprintf(response, text)
+	query := request.URL.Path[1:]
+	match, _ := regexp.MatchString(`\?ports=([0-9,]+)&pid=([0-9]+)`, query)
+	if match {
+		configuration.httpHandlerQuery(response, &query)
+	} else {
+		tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
+		text := tuplesToText(tuples)
+		sessionId := atomic.AddUint32((*uint32)(&configuration.lastSessionId), 1)
+		configuration.addSession(SessionId(sessionId), tuples) 
+		fmt.Fprintf(response, text)
+	}
+	 
 }
 
 func main() {
