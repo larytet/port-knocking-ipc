@@ -47,12 +47,7 @@ func bindPorts(ports []int) []net.Listener{
 	return listeners	
 }
 
-func closeListeners(listeners []net.Listener) {
-	for _, listener := range listeners {
-		listener.Close()
-	}
-}
-
+// Goroutine to accept incoming connection
 func handleAccept(listener net.Listener) {
 	defer listener.Close()	
 	for {
