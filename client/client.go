@@ -28,13 +28,13 @@ func getPorts(text string) [][]int{
 	tuplesStr := strings.Split(text, "\n")
 	tuples := [][]int{}
 	for _, tupleStr := range tuplesStr {
-		portsStr := strings.Split(tupleStr, "\n")
+		portsStr := strings.Split(tupleStr, ",")
 		ports := []int{}
 		for _, portStr := range portsStr {
 			port, err := strconv.Atoi(portStr)
 			if err == nil {
 				ports = append(ports, port)	
-			}
+			} 
 		}
 		if len(ports) > 0 {
 			tuples = append(tuples, ports)
