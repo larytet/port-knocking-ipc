@@ -181,8 +181,34 @@ func (configuration *Configuration) removeSession(id SessionId) {
 	delete(configuration.mapSessions, id)
 }
 
+func parseUrlQuerySessionPorts(portsStr []string, tupleSize int) ([][]int, bool) {
+	var ports [][]int
+	return ports, true
+}
+
+func parseUrlQuerySessionPid(portsStr []string) (int, bool) {
+	return 0, true
+}
+
 // Handle URL quries
 func (configuration *Configuration) httpHandlerSession(response http.ResponseWriter, query url.Values) {
+	portsStr, ok := query["ports"]
+	if !ok {
+		return
+	}
+	pidStr, ok := query["pid"] 
+	if !ok {
+		return
+	}
+	ports, ok := parseUrlQuerySessionPorts(portsStr, configuration.tupleSize)
+	if !ok {
+		return
+	}
+	pid, ok := parseUrlQuerySessionPid(pidStr)
+	if !ok {
+		return
+	}
+	fmt.Println(ports, pid)
 }
 
 // HTTP server hook
