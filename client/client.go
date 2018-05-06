@@ -10,13 +10,16 @@ import (
 	"net/url"
 	"flag"
 	"fmt"
+	"time"
 	"os"
 	"strings"
 	"io/ioutil"
 	"strconv"
+	"port-knocking-ipc/utils"
 )
 
 // Send HTTP GET to the host
+// Blocking
 func knock(host string) {
 	response, err := http.Get(host)	
 	if err == nil {
@@ -32,7 +35,8 @@ func knock(host string) {
 	}	
 } 
 
-// Port knocking - send HTTP GET for the specified ports on the localhost 
+// Port knocking - send HTTP GET for the specified ports on the localhost
+// Unblocking 
 func portKnocking(ports []int) {
 	for port := range ports {
 		host := fmt.Sprintf("http://127.0.0.1:%d", port)
@@ -65,14 +69,16 @@ func getPidFilename(pid int) string {
 	return pidFilename
 }
 
-func createPidFile(ports []int) {
+func createPidFile(ports []int) (string, bool) {
 	pid := os.Getpid()
 	pidFilename := getPidFilename(pid)
     text := []byte(fmt.Sprintf("%d\n%v\n", pid, ports))
     err := ioutil.WriteFile(pidFilename, text, 0644)
     if err != nil {
 		fmt.Println("Failed to write file", pidFilename)
+		return pidFilename, false
     }
+	return pidFilename, true
 }
 
 // Spawn goroutines to knock the ports specified in the server response 
@@ -84,9 +90,18 @@ func handleResponse(text string) {
 			ports = append(ports, port)
 		}	
 	}
+	// portKnockig() does not block
 	portKnocking(ports)
-	pid := os.Getpid()
-	fmt.Printf("%d:knocking %v\n", pid, ports)
+	pidFilename, ok := createPidFile(ports)
+	timeout := time.Duration(10*1000)
+	check_period := time.Duration(100)
+	period := timeout/check_period 
+	if ok {
+		for !utils.PathExists(pidFilename) && period > 0 {
+			time.Sleep(check_period * time.Millisecond)
+			period -= 1			
+		}
+	}
 }
 
 func main() {
