@@ -33,7 +33,8 @@ type Knocks struct {
 }
 
 var knocks = Knocks{state: make(map[int]*KnockingState)}
- 
+
+// Add the port to the map of knocking sequences 
 func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
 	const timeout = time.Duration(5) //s
 	expirationTime := time.Now().UTC().Add(time.Second*timeout)
@@ -51,6 +52,7 @@ func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
 	return state
 }
 
+// get list of ports to bind
 func getPortsToBind() []int{
 	portsBase := *flag.Int("port_base", 21380, "Base port number")
 	portsRangeSize := *flag.Int("port_range", 10, "Size of the ports range")
@@ -61,6 +63,7 @@ func getPortsToBind() []int{
 	return ports
 }
 
+// bind the specified ports 
 func bindPorts(ports []int) []net.Listener{
 	listeners := []net.Listener{}
 	failedToBind := []int{}
@@ -106,6 +109,7 @@ func getPid(port int) (pid int, ok bool) {
 	}
 }
 
+// Return true if all tuples are collected or timeout
 func isCompleted(state *KnockingState) bool {
 	if state.expirationTime.Before(time.Now().UTC()) {
 		return true 
@@ -124,9 +128,11 @@ func isCompleted(state *KnockingState) bool {
 	return false
 }
 
+// Send "/session?ports=...&pid=..." to the server
 func sendQueryToServer(pid int, ports []int) {
 }
 
+// Goroutine which periodically checks if any knocking sequences completed
 func completeKnocks() {
 	knocks.mutex.Lock()
 	defer knocks.mutex.Unlock()
