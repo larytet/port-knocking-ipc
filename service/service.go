@@ -50,6 +50,7 @@ func closeListeners(listeners []net.Listener) {
 		listener.Close()
 	}
 }
+
 func main() {
 	ports := getPortsToBind()
 	listeners := bindPorts(ports)

@@ -19,6 +19,36 @@ The server generates a combination of ports from a predefined port range. The se
 
 The server is susceptible to the replay attacks. For example an adversary can constantly send a query with a specific port combination until it gets a positive response from the server. The server can introduce "holes" when choosing ports combinations by skipping a random number of combinations.     
 
+## In the source code
+
+### Server
+
+Get the predefined range of ports from the command line argument
+Wait for HTTP GET from a cient, generate an XML containing a set of port tuples choosen from the range of ports
+Add the set of ports to the dictionary of existing sessions
+Send the generated XML file to the client
+If a service connects get the ports and PID from the URL query, look for the file /tmp/PID, compare the data
+in the file with the ports stored in the dictionary. If there is a match removed the file /tmp/PID
+
+### Client
+
+Send HTTP GET to the server
+Parse the XML reponses, write the ports combination to the file /tmp/PID
+Establish TCP connections with the service using the ports specified in the XML file
+Poll the file /tmp/PID for 10s. If the file is not removed, print error, remove the file
+
+### Service
+
+Get the ports range from the command line, list of ports to skip 
+for simulaiton of failure of bind
+Bind the specified ports
+Wait for TCP connections from a client
+Accept connection, collect the port number and the client PID
+When the required number of ports are knocked or a timeout expired send  
+all possible combinations of the collected port knocks and ports the service 
+failed to bind to the server
+
+
 ## Tolerance for failures to bind ports
  
 The suggested scheme allows the service to tolerate failure to bind some of the ports in the predefined range. The idea is that if the service failed to bind a port it will send all possible combinations of the collected "knocks" and the ports the service failed to bind.
