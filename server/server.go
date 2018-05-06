@@ -9,8 +9,9 @@ package main
 
 import (
     "sync"
-    "regexp"
+    //"regexp"
     "sync/atomic"
+    "net/url"
 	"flag"
 	"fmt"
 	"log"
@@ -60,7 +61,6 @@ type Configuration struct {
 	// 'class' I have to duplicate the code for every map
 	// I will use a single mutex which rules them all 
 	mapMutex        sync.Mutex
-	urlQueryRegex   *regexp.Regexp
 }
 
 // Setup the server configuration accrding to the command line options
@@ -72,7 +72,6 @@ func (configuration *Configuration) init() *Configuration {
 	configuration.initCombinationsGenerator()
 	configuration.mapSessions = make(map[SessionId]SessionState)        
 	configuration.mapTuples = make(map[KeyId]SessionId)
-	configuration.urlQueryRegex, _ = regexp.Compile(`\?ports=([0-9,]+)&pid=([0-9]+)`)	
 	return configuration
 }
 
@@ -183,20 +182,15 @@ func (configuration *Configuration) removeSession(id SessionId) {
 }
 
 // Handle URL quries
-func (configuration *Configuration) httpHandlerQuery(response http.ResponseWriter, query string, match [][]string) {
-	for s := range match {
-		fmt.Println(s)
-	}
-	
-	
+func (configuration *Configuration) httpHandlerSession(response http.ResponseWriter, query url.Values) {
 }
 
 // HTTP server hook
 func (configuration *Configuration) httpHandler(response http.ResponseWriter, request *http.Request) {
-	query := request.URL.Path[1:]
-	match := configuration.urlQueryRegex.FindAllStringSubmatch(query, -1)
-	if len(match) != 0 {
-		configuration.httpHandlerQuery(response, query, match)
+	path := request.URL.Path[1:]
+	query := request.URL.Query()
+	if path == "session" {
+		configuration.httpHandlerSession(response, query)
 	} else {
 		tuples := getPortsCombinations(&configuration.generator, configuration.tuples)
 		text := tuplesToText(tuples)
