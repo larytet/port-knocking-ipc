@@ -1,5 +1,6 @@
 DIR=`dirname "$0"`
-go test $DIR/utils/combinations -cover -v
-go test $DIR/server -cover -v
-go test $DIR/client -cover -v
+VERBOSE=$1
+go test $DIR/utils/combinations -cover $VERBOSE
+go test $DIR/server -cover $VERBOSE
+go test $DIR/client -cover $VERBOSE
 
