@@ -13,6 +13,7 @@ import (
 	"net"
 	"fmt"
 	"flag"
+	"time"
 //	"os"
 //	"port-knocking-ipc/utils"
 )
@@ -21,8 +22,8 @@ func getPortsToBind() []int{
 	portsBase := *flag.Int("port_base", 21380, "Base port number")
 	portsRangeSize := *flag.Int("port_range", 10, "Size of the ports range")
 	ports := []int{}
-	for port := portsBase;port < (portsBase+portsRangeSize); port += 1 {
-		ports = append(ports, port)
+	for i := 0;i < portsRangeSize; i += 1 {
+		ports = append(ports, portsBase+i)
 	}  	
 	return ports
 }
@@ -30,8 +31,8 @@ func getPortsToBind() []int{
 func bindPorts(ports []int) []net.Listener{
 	listeners := []net.Listener{}
 	failedToBind := []int{}
-	for port := range ports {
-		name := fmt.Sprintf("localhost:%d", port)
+	for _, port := range ports {
+		name := fmt.Sprintf(":%d", port)
 		listener, err := net.Listen("tcp", name)
 		if err == nil {
 			listeners = append(listeners, listener)
@@ -42,6 +43,7 @@ func bindPorts(ports []int) []net.Listener{
 	if len(failedToBind) != 0 {
 		fmt.Printf("Failed to bind ports %v\n", failedToBind)		
 	}
+	fmt.Println("Bound", ports)
 	return listeners	
 }
 
@@ -53,14 +55,16 @@ func closeListeners(listeners []net.Listener) {
 
 func handleAccept(listener net.Listener) {
 	defer listener.Close()	
-    for {
-            c, err := l.Accept()
-            if err != nil {
-                log.Fatal(err)
-            }
-            fmt.Println("New connection found!")
-            go listenConnection(c)
-    }
+	for {
+		connection, err := listener.Accept()
+		if err != nil {
+			fmt.Println("Accept failed", err)
+		}
+		defer connection.Close()
+		fmt.Println("New connection found!")
+		remoteAddress := connection.RemoteAddr()
+		fmt.Println(remoteAddress)
+	}
 }
 
 func main() {
@@ -68,5 +72,8 @@ func main() {
 	listeners := bindPorts(ports)
 	for _, listener := range listeners {
 		go handleAccept(listener)
+	}
+	for {
+		time.Sleep(100)
 	}		
 }
