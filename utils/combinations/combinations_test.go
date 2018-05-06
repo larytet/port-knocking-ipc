@@ -31,19 +31,30 @@ func run_test(t *testing.T, data []int, size int, expectedResults [][]int) {
 	}	
 }
 
+type CombinationsTestSets struct {
+	data []int
+	size int
+	result [][]int
+}
+
 func TestMain(t *testing.T) {
-	run_test(t, []int{0,1,2,3}, 2, [][]int{
-		{0, 1}, 
-		{0, 2}, 
-		{0, 3}, 
-		{1, 2}, 
-		{1, 3}, 
-		{2, 3},
-	})
-	run_test(t, []int{0,1,1}, 2, [][]int{
-		{0, 1}, 
-		{0, 1}, 
-		{1, 1}, 
-	})
+	testSets := []CombinationsTestSets {
+		{[]int{0,1,2,3}, 2, [][]int{
+			{0, 1}, 
+			{0, 2}, 
+			{0, 3}, 
+			{1, 2}, 
+			{1, 3}, 
+			{2, 3},
+		}},
+		{[]int{0,1,1}, 2, [][]int{
+			{0, 1}, 
+			{0, 1}, 
+			{1, 1},
+		}},
+	}
+	for _, testSet := range testSets {
+		run_test(t, testSet.data, testSet.size, testSet.result)
+	}
 }
 
