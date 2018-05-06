@@ -3,6 +3,7 @@ package utils
 import (
     "strconv"
 	"strings"
+	"os"
 	"fmt"
 	"runtime/debug"
 )
@@ -87,4 +88,11 @@ func AtoIpPort(s string) (int, bool) {
 		return 0, false
 	}		
 	return port, true
+}
+
+func PathExists(path string) bool {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return false
+	}
+	return true
 }

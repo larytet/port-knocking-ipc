@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"flag"
 	"fmt"
+	"os"
 	"strings"
 	"io/ioutil"
 	"strconv"
@@ -59,6 +60,21 @@ func getPorts(text string) [][]int{
 	return tuples
 }
 
+func getPidFilename(pid int) string {
+	pidFilename := fmt.Sprintf("/tmp/knock_%d", pid)  
+	return pidFilename
+}
+
+func createPidFile(ports []int) {
+	pid := os.Getpid()
+	pidFilename := getPidFilename(pid)
+    text := []byte(fmt.Sprintf("%d\n%v\n", pid, ports))
+    err := ioutil.WriteFile(pidFilename, text, 0644)
+    if err != nil {
+		fmt.Println("Failed to write file", pidFilename)
+    }
+}
+
 // Spawn goroutines to knock the ports specified in the server response 
 func handleResponse(text string) {
 	ports := []int{}
@@ -69,7 +85,8 @@ func handleResponse(text string) {
 		}	
 	}
 	portKnocking(ports)
-	fmt.Println("Knocking", ports)
+	pid := os.Getpid()
+	fmt.Printf("%d:knocking %v\n", pid, ports)
 }
 
 func main() {
