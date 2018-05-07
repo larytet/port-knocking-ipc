@@ -114,7 +114,7 @@ func getPid(port int) (pid int, ok bool) {
 		for _, line := range output {
 			 match := re.FindStringSubmatch(line)
 			 if len(match) > 0 {
-			 	pid, ok := utils.AtoPid(match[1])
+			 	pid, ok := utils.AtoPID(match[1])
 			 	return pid, ok
 			 }
 		} 

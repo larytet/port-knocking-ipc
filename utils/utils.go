@@ -69,8 +69,8 @@ func PrintStack() {
 	debug.PrintStack()
 }
 
-// AtoPid converts a string to process ID
-func AtoPid(s string) (int, bool) {
+// AtoPID converts a string to process ID
+func AtoPID(s string) (int, bool) {
 	pid, err := strconv.Atoi(s)
 	if err != nil {
 		return 0, false

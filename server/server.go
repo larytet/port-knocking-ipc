@@ -226,7 +226,7 @@ func parseURLQuerySessionPid(pidStr []string) (int, bool) {
 	if len(pidStr) != 1 {
 		return 0, false 
 	}
-	pid,  ok := utils.AtoPid(pidStr[0])
+	pid,  ok := utils.AtoPID(pidStr[0])
 	if !ok {
 		return 0, false 		
 	}
