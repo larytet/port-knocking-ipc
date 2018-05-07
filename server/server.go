@@ -9,6 +9,7 @@ package main
 
 import (
     "sync"
+    "os"
     "strings"
     "sync/atomic"
     "net/url"
@@ -248,7 +249,13 @@ func (configuration *Configuration) findSessions(tuples [][]int) []SessionState 
 		if ok {
 			session, ok := configuration.mapSessions[sessionId]
 			if ok {
-				sessions = append(sessions, session) 
+				if len(sessions) > 0 {
+					if sessions[0].id != sessionId {
+						sessions = append(sessions, session)
+					} 
+				} else {
+					sessions = append(sessions, session)
+				} 
 			} 
 		}
 	}
@@ -297,6 +304,12 @@ func (configuration *Configuration) httpHandlerSession(response http.ResponseWri
 		return
 	}
 	fmt.Fprintf(response, "Removed tuples for session %v, pid %d", session, pid)
+	pidFilename := utils.GetPidFilename(pid)
+	if err := os.Remove(pidFilename); err != nil {
+		fmt.Fprintf(response, "Failed to remove file %s\n", pidFilename)		
+	} else {
+		fmt.Fprintf(response, "File %s removed\n", pidFilename)				
+	}
 }
 
 // Allocate combinations of ports (ports tuples), generate response text, update the sessions map 

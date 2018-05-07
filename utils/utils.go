@@ -96,3 +96,19 @@ func PathExists(path string) bool {
 	}
 	return true
 }
+
+func GetPidFilename(pid int) string {
+	pidFilename := fmt.Sprintf("/tmp/knock_%d", pid)  
+	return pidFilename
+}
+
+// No "contains" method in Golang
+// https://stackoverflow.com/questions/10485743/contains-method-for-a-slice
+func Contains(s []int, e int) bool {
+    for _, a := range s {
+        if a == e {
+            return true
+        }
+    }
+    return false
+}

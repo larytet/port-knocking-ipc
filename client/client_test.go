@@ -27,7 +27,7 @@ func TestGetPorts(t *testing.T) {
 func TestCreatePidFile(t *testing.T) {
 	pid := os.Getpid()
 	ports := []int{1,2,3,4}
-	filename := getPidFilename(pid)
+	filename := utils.GetPidFilename(pid)
 	createPidFile(ports)
 	if !utils.PathExists(filename) {
 		t.Errorf("File %s not found\n", filename)

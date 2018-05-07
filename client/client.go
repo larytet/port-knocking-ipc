@@ -71,14 +71,9 @@ func getPorts(text string) [][]int{
 	return tuples
 }
 
-func getPidFilename(pid int) string {
-	pidFilename := fmt.Sprintf("/tmp/knock_%d", pid)  
-	return pidFilename
-}
-
 func createPidFile(ports []int) (string, bool) {
 	pid := os.Getpid()
-	pidFilename := getPidFilename(pid)
+	pidFilename := utils.GetPidFilename(pid)
     text := []byte(fmt.Sprintf("%d\n%v\n", pid, ports))
     err := ioutil.WriteFile(pidFilename, text, 0644)
     if err != nil {
