@@ -61,11 +61,9 @@ func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
 
 // get list of ports to bind
 func getPortsToBind() []int{
-	portsBase := *flag.Int("port_base", 21380, "Base port number")
-	portsRangeSize := *flag.Int("port_range", 10, "Size of the ports range")
 	ports := []int{}
-	for i := 0;i < portsRangeSize; i += 1 {
-		ports = append(ports, portsBase+i)
+	for i := 0;i < knocks.portsRangeSize; i += 1 {
+		ports = append(ports, knocks.portsBase+i)
 	}  	
 	return ports
 }
