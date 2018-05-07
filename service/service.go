@@ -37,11 +37,14 @@ type Knocks struct {
 	boundPorts      []int
 	portsRangeSize  int
 	tolerance       int
+	tupleSize       int
 }
 
 var knocks = Knocks{state: make(map[int]*KnockingState),
 	portsBase : *flag.Int("port_base", 21380, "Base port number"),
 	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
+	tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
+	tupleSize : *flag.Int("port_range", 10, "Size of the ports range")/2,
 }
 
 // Add the port to the map of knocking sequences 
@@ -124,21 +127,19 @@ func isCompleted(state *KnockingState) bool {
 	if state.expirationTime.Before(time.Now().UTC()) {
 		return true 
 	}
-	portsRangeSize := *flag.Int("port_range", 10, "Size of the ports range")
-	tolerance := *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures")
-	tupleSize := portsRangeSize/2
 	// I want to allocate enough tuples to reach the specifed tolerance level
-	tuples := (tolerance*tupleSize)/100 + 2
-	if tolerance == 0 {
+	tuples := (knocks.tolerance * knocks.tupleSize)/100 + 2
+	if knocks.tolerance == 0 {
 		tuples = 1		
 	}  
-	if len(state.ports) % (tuples*tupleSize) == 0{
+	if len(state.ports) % (tuples * knocks.tupleSize) == 0{
 		return true
 	}
 	return false
 }
 
 // Send "/session?ports=...&pid=..." to the server
+// I have to divide the collected ports by tuples of size  
 func sendQueryToServer(pid int, ports []int) {
 }
 
