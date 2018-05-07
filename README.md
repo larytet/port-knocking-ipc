@@ -130,3 +130,6 @@ The end points send the following responses to the server
 
 * http://marcio.io/2015/07/handling-1-million-requests-per-minute-with-golang/
 * https://stackoverflow.com/questions/49978730/reliable-delivery-of-information-between-a-browser-and-a-locally-run-service-usi
+* https://stackoverflow.com/questions/10125881/send-a-message-from-javascript-running-in-a-browser-to-a-windows-batch-file
+* http://kb.mozillazine.org/Register_protocol
+
