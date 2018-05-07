@@ -125,3 +125,21 @@ func Contains(s []int, e int) bool {
     }
     return false
 }
+
+// GetTupleSize returns number of ports in a tuple give the ports range size
+func GetTupleSize(portsRangeSize int) int {
+	return portsRangeSize/2
+}
+
+
+// GetTuplesCount returns number of tuples to send given the tuple size and 
+// required tolerance
+func GetTuplesCount(tolerance int, tupleSize int) int {
+	tuplesCount := tolerance * tupleSize/100 + 2
+	if tolerance == 0 {
+		tuplesCount = 1		
+	} 
+	return tuplesCount
+}
+
+

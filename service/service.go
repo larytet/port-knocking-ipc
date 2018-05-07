@@ -131,7 +131,8 @@ func (k *knocks) isCompleted(state *knockingState) bool {
 		return true 
 	}
 	// I want to allocate enough tuples to reach the specifed tolerance level
-	tuples := (k.tolerance * k.tupleSize)/100 + 2
+	tuples := utils.GetTuplesCount(k.tolerance, k.tupleSize)
+	
 	if k.tolerance == 0 {
 		tuples = 1		
 	}  
@@ -221,7 +222,7 @@ func (k *knocks) handleAccept(listener net.Listener) {
 }
 
 func main() {
-	knocksCollection.tupleSize = knocksCollection.portsRangeSize/2
+	knocksCollection.tupleSize = utils.GetTupleSize(knocksCollection.portsRangeSize)
 	ports := knocksCollection.getPortsToBind()
 	knocksCollection.listeners, knocksCollection.boundPorts, knocksCollection.failedToBind = bindPorts(ports)
 	url := &url.URL{
