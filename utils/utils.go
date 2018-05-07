@@ -8,15 +8,17 @@ import (
 	"runtime/debug"
 )
 
+// ToString returns conveiniet presentation of a slice of integers
 func ToString(a []int, delim string) string {
     return strings.Trim(strings.Replace(fmt.Sprint(a), " ", delim, -1), "[]")
 }
 
-// clone the slice - veird? do not ask, this is golang thing
+// CloneSlice clones the slice - veird? do not ask, this is golang thing
 func CloneSlice(a []int) []int{
 	return append([]int(nil), a...)	
 }
 
+// Compare two slices of integers
 // Based on https://stackoverflow.com/questions/15311969/checking-the-equality-of-two-slices
 // What about reflect.DeepEqual(a, b)?
 func Compare(a, b []int) bool {
@@ -42,6 +44,7 @@ func Compare(a, b []int) bool {
     return true
 }
 
+// MakeRange is similar to the Python's range - creates a slice of integers  
 func MakeRange(start, count int) []int {
     a := make([]int, count)
     for i := range a {
@@ -50,6 +53,8 @@ func MakeRange(start, count int) []int {
     return a
 }
 
+// Max returns the maximum of two arguments
+// See https://stackoverflow.com/questions/27516387/what-is-the-correct-way-to-find-the-min-between-two-integers-in-go
 func Max(x, y int) int {
     if x > y {
         return x
@@ -57,10 +62,12 @@ func Max(x, y int) int {
     return y
 }
 
+// PrintStack helps to get rid of import runtime/debug everywhere
 func PrintStack() {
 	debug.PrintStack()
 }
 
+// AtoPid converts a string to process ID
 func AtoPid(s string) (int, bool) {
 	pid, err := strconv.Atoi(s)
 	if err != nil {
@@ -76,7 +83,8 @@ func AtoPid(s string) (int, bool) {
 	return pid, true
 }
 
-func AtoIpPort(s string) (int, bool) {
+// AtoIPPort converts a string to TCP port
+func AtoIPPort(s string) (int, bool) {
 	port,  err := strconv.Atoi(s)
 	if err != nil {
 		return 0, false
@@ -90,6 +98,7 @@ func AtoIpPort(s string) (int, bool) {
 	return port, true
 }
 
+// PathExists returns true if the path exists
 func PathExists(path string) bool {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return false
@@ -97,12 +106,14 @@ func PathExists(path string) bool {
 	return true
 }
 
+// GetPidFilename returns /tmp/knock_PID
 func GetPidFilename(pid int) string {
 	pidFilename := fmt.Sprintf("/tmp/knock_%d", pid)  
 	return pidFilename
 }
 
-// No "contains" method in Golang
+// Contains returns true if the slice contains the specified value  
+// No "contains" method in Golang (rolling my eyes again)
 // https://stackoverflow.com/questions/10485743/contains-method-for-a-slice
 func Contains(s []int, e int) bool {
     for _, a := range s {

@@ -216,7 +216,7 @@ func parseURLQuerySessionPorts(portsStr []string, tupleSize int) ([][]int, bool)
 		if portsCount % tupleSize == 0 {
 			ports = append(ports, []int{})			
 		}		
-		port, ok := utils.AtoIpPort(portStr)
+		port, ok := utils.AtoIPPort(portStr)
 		if !ok {
 			return nil, false
 		}
