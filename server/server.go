@@ -58,7 +58,7 @@ type configuration struct {
 	generator       combinations.State
 	tuples          int
 	tupleSize       int
-	lastSessionId   sessionID
+	lastSessionID   sessionID
 	mapSessions     map[sessionID]sessionState        
 	mapTuples       map[keyID]sessionID
 	// No generics in the Golang? RME. If I want a thread safe map 
@@ -73,7 +73,7 @@ func createConfiguration() *configuration   {
 		portsBase : *flag.Int("port_base", 21380, "Base port number"),
 		portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
 		tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
-		lastSessionId : sessionID(0),
+		lastSessionID : sessionID(0),
 		mapSessions : make(map[sessionID]sessionState),        
 		mapTuples : make(map[keyID]sessionID),
 	}
@@ -110,7 +110,7 @@ func getPortsCombinations(generator *combinations.State, count int, skipProbabil
 			// I have to clone the slice generator.Next() returns the same reference
 			tuple := generator.NextWrap()
 			tuples = append(tuples, tuple)
-			count -= 1
+			count--
 		}
 	}
 	return tuples
@@ -132,7 +132,7 @@ func tuplesToText(tuples [][]int) string {
 // mask the ports numner by  
 // tuple[0] goes to the MSB
 func tupleToKey(base uint64, tuple []int) keyID {
-	var key uint64 = 0
+	var key uint64
 	for  index := uint64(0);index < uint64(len(tuple));index++ {
 		if index >= maxTupleSize {
 			break
@@ -198,7 +198,7 @@ func (c *configuration) removeSession(id sessionID) (tuples, tuplesRemoved [][]i
 	return tuples, tuplesRemoved, true
 }
 
-func parseUrlQuerySessionPorts(portsStr []string, tupleSize int) ([][]int, bool) {
+func parseURLQuerySessionPorts(portsStr []string, tupleSize int) ([][]int, bool) {
 	if len(portsStr) != 1 {
 		return nil, false
 	}
@@ -277,7 +277,7 @@ func (c *configuration) httpHandlerSession(response http.ResponseWriter, query u
 		fmt.Fprintf(response, "No parameter 'pid'")
 		return
 	}
-	tuples, ok := parseUrlQuerySessionPorts(portsStr, c.tupleSize)
+	tuples, ok := parseURLQuerySessionPorts(portsStr, c.tupleSize)
 	if !ok {
 		fmt.Fprintf(response, "Failed to parse '%s'", tuples)
 		return
@@ -318,7 +318,7 @@ func (c *configuration) httpHandlerSession(response http.ResponseWriter, query u
 // Allocate combinations of ports (ports tuples), generate response text, update the sessions map 
 func (c *configuration) httpHandlerRoot(response http.ResponseWriter, query url.Values) {
 	tuples := getPortsCombinations(&c.generator, c.tuples, 2)
-	id := atomic.AddUint32((*uint32)(&c.lastSessionId), 1)
+	id := atomic.AddUint32((*uint32)(&c.lastSessionID), 1)
 	c.addSession(sessionID(id), tuples) 
 	text := tuplesToText(tuples)
 	fmt.Fprintf(response, text)

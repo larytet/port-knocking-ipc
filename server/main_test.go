@@ -63,7 +63,7 @@ func TestParseUrlQuerySessionPorts(t *testing.T) {
 	}
 	
 	for testIndex, testSet := range testSets {
-		tuples, ok := parseUrlQuerySessionPorts(testSet.portsStr, testSet.tupleSize)
+		tuples, ok := parseURLQuerySessionPorts(testSet.portsStr, testSet.tupleSize)
 		if ok != testSet.ok {
 			t.Errorf("Got ok '%t' expected '%t' for test %d\n", ok, testSet.ok, testIndex)			
 		}
