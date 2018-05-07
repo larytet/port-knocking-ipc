@@ -103,7 +103,7 @@ func bindPorts(ports []int) (listeners []net.Listener, boundPorts []int, failedT
 // I am looking for line like 
 // "tcp        0      0 127.0.0.1:36518         127.0.0.1:21380         ESTABLISHED 26396/firefox  "
 // In the output of the 'netstat'
-func getPid(port int) (pid int, ok bool) {
+func getPID(port int) (pid int, ok bool) {
 	command := exec.Command("netstat", "-ntp")
 	var out bytes.Buffer
 	command.Stdout = &out
@@ -202,7 +202,7 @@ func (k *knocks) handleAccept(listener net.Listener) {
 		// Based on https://groups.google.com/forum/#!topic/golang-nuts/JLzchxXm5Vs
 		// See also https://golang.org/ref/spec#Type_assertions
 		port := remoteAddress.(*net.TCPAddr).Port
-		pid, ok := getPid(port)
+		pid, ok := getPID(port)
 		connection.Close()
 		if ok {			
 			k.mutex.Lock()
