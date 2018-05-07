@@ -23,6 +23,12 @@ The service should divide the stream of collected port knocks into ports tuples.
 The client (a browser) should not reorder the ports in the tuples. Usually the order of "knocks" can be enforced in the JS. If the order is not possible to
 enforce the client can introduce "start tuple" knock between ports tuples. A start tuple knock is knocking a special port which service surely could bind. The client sends the tuple start knock, waits, follows by the ports of the tuple in arbitrary order, waits again, repeats with the next tuple.
 
+## Alternative solutions
+
+* It is possible to register protocol in Windows. The new protocol can cause the browser to execute a shell. The shell script can create a file. The service is expected to watch for the files created in a specific folder.
+* Set the browser title bar from the JS. The service enumerates all windows in the UI, looks for data in the title bar.
+* Set a PAC file which configures proxy server 127.0.0.1:8080 for domain name *.mylocaladdress.com. In the service collect all HTTP CONNECT requests (only HTTP server is required), get PID of the connecting application, reject the requests with 400, send the domain name to the server.  
+ 
 ## In the source code
 
 ### Server

@@ -199,6 +199,8 @@ func (k *knocks) handleAccept(listener net.Listener) {
 			continue
 		}
 		remoteAddress := connection.RemoteAddr()
+		// TODO - make sure that remote IP is localhost
+		
 		// Based on https://groups.google.com/forum/#!topic/golang-nuts/JLzchxXm5Vs
 		// See also https://golang.org/ref/spec#Type_assertions
 		port := remoteAddress.(*net.TCPAddr).Port
