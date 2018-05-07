@@ -198,7 +198,6 @@ func handleAccept(listener net.Listener) {
 			fmt.Println("Accept failed", err)
 			continue
 		}
-		knocks.mutex.Lock()
 		remoteAddress := connection.RemoteAddr()
 		// Based on https://groups.google.com/forum/#!topic/golang-nuts/JLzchxXm5Vs
 		// See also https://golang.org/ref/spec#Type_assertions
@@ -206,6 +205,7 @@ func handleAccept(listener net.Listener) {
 		pid, ok := getPid(port)
 		connection.Close()
 		if ok {			
+			knocks.mutex.Lock()
 			//fmt.Printf("New connection localPort=%d, remotePort=%d, pid=%d\n", localPort, port, pid)
 			state := knocks.addKnock(pid, localPort)
 			if isCompleted(state) {
@@ -213,11 +213,11 @@ func handleAccept(listener net.Listener) {
 				delete(knocks.state, state.pid)
 				sendQueryToServer(state.pid, state.ports)
 			}
+			knocks.mutex.Unlock()
 		} else {
 			fmt.Println("Failed to recover pid for port", port)			
 		}
 		//fmt.Println("Done port", port)			
-		knocks.mutex.Unlock()
 	}
 }
 
