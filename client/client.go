@@ -21,9 +21,8 @@ import (
 // Send HTTP GET to the host
 // Blocking
 func knock(host string) {
-	timeout := time.Duration(100 * time.Millisecond)
 	client := http.Client {
-	    Timeout: timeout,
+	    Timeout: time.Duration(100 * time.Millisecond),
 	}	
 	response, err := client.Get(host)	
 	if err == nil {
