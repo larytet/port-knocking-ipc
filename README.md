@@ -4,7 +4,7 @@
 
 Based on the idea https://stackoverflow.com/questions/49978730/reliable-delivery-of-information-between-a-browser-and-a-locally-run-service-usi
 
-The goal is to reliably deliver a key from a WEB server to a locally running service via a WEB page opened in a WEB browser without introducing an HTTPS server on the local machine. 
+The goal is to reliably deliver a key from a WEB server to a locally running service via a WEB page opened in a WEB browser without introducing an HTTPS server and a certificate on the local machine. 
 
 Some applications:
 
@@ -15,6 +15,12 @@ Some applications:
 
 The server generates a combination of ports from a predefined port range. The server generates an HTML page which establishes connections to the WEB server running on the local host (127.0.0.1). The service listens for the connection attempts, sorts the "knocks" by process ID. The service closes the connections. The service sends the collected "knocks" to the server with the required information. The server can response with further instructions. 
 
+## Alternative solutions
+
+* It is possible to register a new protocol scheme in Windows. The new protocol, for example shell://, can cause the browser to execute a shell. The shell script can create a file. The service is expected to watch for the files created in a specific folder. The service finds out the PID of the process which created the file, reads the file content, sends the data to the server.
+* Set the browser title bar from the JS. The service enumerates all windows in the UI, looks for data in the title bar.
+* Set a PAC file which configures proxy server 127.0.0.1:8080 for domain name *.mylocaladdress.com. In the service collect all HTTP CONNECT requests (only HTTP server is required), get PID of the connecting application, reject the requests with 400, send the domain name to the server.  
+
 ## Limitations
 
 The server is susceptible to the replay attacks. For example an adversary can constantly send a query with a specific port combination until it gets a positive response from the server. The server can introduce "holes" when choosing ports combinations by skipping a random number of combinations.
@@ -23,11 +29,6 @@ The service should divide the stream of collected port knocks into ports tuples.
 The client (a browser) should not reorder the ports in the tuples. Usually the order of "knocks" can be enforced in the JS. If the order is not possible to
 enforce the client can introduce "start tuple" knock between ports tuples. A start tuple knock is knocking a special port which service surely could bind. The client sends the tuple start knock, waits, follows by the ports of the tuple in arbitrary order, waits again, repeats with the next tuple.
 
-## Alternative solutions
-
-* It is possible to register a new protocol scheme in Windows. The new protocol, for example shell://, can cause the browser to execute a shell. The shell script can create a file. The service is expected to watch for the files created in a specific folder. The service finds out the PID of the process which created the file, reads the file content, sends the data to the server.
-* Set the browser title bar from the JS. The service enumerates all windows in the UI, looks for data in the title bar.
-* Set a PAC file which configures proxy server 127.0.0.1:8080 for domain name *.mylocaladdress.com. In the service collect all HTTP CONNECT requests (only HTTP server is required), get PID of the connecting application, reject the requests with 400, send the domain name to the server.  
  
 ## In the source code
 
