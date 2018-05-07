@@ -243,6 +243,8 @@ func parseUrlQuerySessionPid(pidStr []string) (int, bool) {
 // has failed to bind all ports  
 func (configuration *Configuration) findSessions(tuples [][]int) []SessionState {
 	sessions := []SessionState{}
+	configuration.mapMutex.Lock()
+	defer configuration.mapMutex.Unlock()
 	for _, tuple := range tuples {
 		key := tupleToKey(uint64(configuration.portsBase), tuple)
 		sessionId, ok := configuration.mapTuples[key]
