@@ -29,13 +29,13 @@ func testKeyTupleConverter(t *testing.T, expectedTuple []int, expectedKey keyID)
 	}		
 }
 
-type KeyTupleConverterTestSet struct {
+type keyTupleConverterTestSet struct {
 	tuple []int
 	key keyID
 }
 
 func TestKeyTupleConverter(t *testing.T) {
-	testSets := []KeyTupleConverterTestSet {
+	testSets := []keyTupleConverterTestSet {
 		{[]int{2,3,4,5,6,7,8,9}, keyID(0x0102030405060708)},
 		{[]int{1,1,1,1,1,1,1,1}, keyID(0x0000000000000000)},
 	}
@@ -45,7 +45,7 @@ func TestKeyTupleConverter(t *testing.T) {
 	}
 }
 
-type ParseUrlQuerySessionPortsTestSet struct {
+type parseURLQuerySessionPortsTestSet struct {
 	portsStr []string
 	tupleSize int
 	ports [][]int
@@ -54,7 +54,7 @@ type ParseUrlQuerySessionPortsTestSet struct {
 
 // Warning! Test the method which handles URL parsing 
 func TestParseUrlQuerySessionPorts(t *testing.T) {
-	testSets := []ParseUrlQuerySessionPortsTestSet {
+	testSets := []parseURLQuerySessionPortsTestSet {
 		{[]string{"0,1,2,3,"}, int(4), [][]int{{0,1,2,3,}, }, bool(true)},
 		{[]string{""}, int(4), [][]int(nil), bool(false)},
 		{[]string{"0,-1,2,3"}, int(4), [][]int(nil), bool(false)},
@@ -75,7 +75,7 @@ func TestParseUrlQuerySessionPorts(t *testing.T) {
 	}
 }
 
-type ParseUrlQuerySessionPidSet struct {
+type parseURLQuerySessionPidSet struct {
 	pidStr []string
 	pid int
 	ok bool
@@ -83,7 +83,7 @@ type ParseUrlQuerySessionPidSet struct {
 
 // Warning! Test the method which handles URL parsing 
 func TestParseUrlQuerySessionPid(t *testing.T) {
-	testSets := []ParseUrlQuerySessionPidSet {
+	testSets := []parseURLQuerySessionPidSet {
 		{[]string{"1"}, int(1), bool(true)},
 		{[]string{"-1"}, int(0), bool(false)},
 		{[]string{"0"}, int(0), bool(false)},
