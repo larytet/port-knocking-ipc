@@ -117,7 +117,7 @@ The end points send the following responses to the server
     [(3,3,4,4,5,5)]    [(3,3,4,4,5,5)]
 
 
-#Usage
+## Usage
 
     git clone https://github.com/larytet/port-knocking-ipc.git
     cd port-knocking-ipc
