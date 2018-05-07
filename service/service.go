@@ -138,7 +138,10 @@ func isCompleted(state *KnockingState) bool {
 }
 
 // Send "/session?ports=...&pid=..." to the server
-// I have to divide the collected ports by tuples of size  
+// I have to divide the collected ports by tuples of size knocks.tupleSize -ports in a tuple are ascending
+// If a tuple is not full I check if there are ports which I failed to bind which 
+// fall in the tuple's range and create all possible port tuples - combinations of collected ports and
+// ports I failed to bind 
 func sendQueryToServer(pid int, ports []int) {
 }
 
