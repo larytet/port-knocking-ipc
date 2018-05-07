@@ -68,7 +68,6 @@ func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
 	}
 	state.ports = append(state.ports, port)
 	state.expirationTime = expirationTime
-	fmt.Println("Collected for", pid, state.ports)
 	return state
 }
 
@@ -154,19 +153,19 @@ func sendQueryToServer(pid int, ports []int) {
 	var text bytes.Buffer
 	text.WriteString(knocks.hostUrl) 
 	text.WriteString("/session?ports=")
-	for port := range ports {
+	for _, port := range ports {
 		text.WriteString(fmt.Sprintf("%d,", port))
 	}
 	text.WriteString("&pid=")
-	text.WriteString(fmt.Sprintf("%d,", pid))
+	text.WriteString(fmt.Sprintf("%d", pid))
 	
 	urlQuery := text.String()
 	response, err := http.Get(urlQuery)
-	if err != nil {
+	if err == nil {
 		defer response.Body.Close()
 		text, err := ioutil.ReadAll(response.Body)
 		if err == nil {
-			fmt.Printf("Got repsonse for ulr='%s': %s", urlQuery, string(text))
+			fmt.Printf("Got repsonse for ulr='%s': %s\n", urlQuery, string(text))
 		}		
 	} else {
 		fmt.Println("Failed to GET", urlQuery)		
@@ -195,6 +194,7 @@ func completeKnocks() {
 
 // Goroutine to accept incoming connection
 func handleAccept(listener net.Listener) {
+	localPort := listener.Addr().(*net.TCPAddr).Port
 	defer listener.Close()	
 	for {
 		connection, err := listener.Accept()
@@ -206,10 +206,10 @@ func handleAccept(listener net.Listener) {
 		// Based on https://groups.google.com/forum/#!topic/golang-nuts/JLzchxXm5Vs
 		// See also https://golang.org/ref/spec#Type_assertions
 		port := remoteAddress.(*net.TCPAddr).Port
-		fmt.Println("New connection port", port)
 		pid, ok := getPid(port)
 		if ok {			
-			state := knocks.addKnock(pid, port)
+			fmt.Printf("New connection localPort=%d, remotePort=%d, pid=%d\n", localPort, port, pid)
+			state := knocks.addKnock(pid, localPort)
 			if isCompleted(state) {
 				delete(knocks.state, state.pid)
 				sendQueryToServer(state.pid, state.ports)

@@ -22,7 +22,7 @@ import (
 // Blocking
 func knock(host string) {
 	client := http.Client {
-	    Timeout: time.Duration(100 * time.Millisecond),
+	    Timeout: time.Duration(50 * time.Millisecond),
 	}	
 	response, err := client.Get(host)	
 	if err == nil {
