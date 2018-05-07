@@ -21,7 +21,7 @@ The server is susceptible to the replay attacks. For example an adversary can co
 
 The service should divide the stream of collected port knocks into ports tuples. Service probably failed to bind some ports. The service assumes the ascending order of ports in the ports tuples.
 The client (a browser) should not reorder the ports in the tuples. Usually the order of "knocks" can be enforced in the JS. If the order is not possible to
-enforce the client can introduce "start frame" knock between ports tuples. A start frame knock is knocking a special port which service surely could bind.  
+enforce the client can introduce "start tuple" knock between ports tuples. A start tuple knock is knocking a special port which service surely could bind. The client sends the tuple start knock, waits, follows by the ports of the tuple in arbitrary order, waits again, repeats with the next tuple.
 
 ## In the source code
 
