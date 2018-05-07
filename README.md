@@ -19,7 +19,7 @@ The server generates a combination of ports from a predefined port range. The se
 
 The server is susceptible to the replay attacks. For example an adversary can constantly send a query with a specific port combination until it gets a positive response from the server. The server can introduce "holes" when choosing ports combinations by skipping a random number of combinations.
 
-The service should divided stream of port knocks into port tuples. Service probably failed to bind some ports. The service assumes the ascending order of ports in the ports tuples.
+The service should divide the stream of collected port knocks into ports tuples. Service probably failed to bind some ports. The service assumes the ascending order of ports in the ports tuples.
 The client (a browser) should not reorder the ports in the tuples. Usually the order of "knocks" can be enforced in the JS. If the order is not possible to
 enforce the client can introduce "start frame" knock between ports tuples. A start frame knock is knocking a special port which service surely could bind.  
 
