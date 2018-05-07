@@ -75,7 +75,7 @@ func createPidFile(ports []int) (string, bool) {
 	pid := os.Getpid()
 	pidFilename := utils.GetPidFilename(pid)
     text := []byte(fmt.Sprintf("%d\n%v\n", pid, ports))
-    err := ioutil.WriteFile(pidFilename, text, 0644)
+    err := ioutil.WriteFile(pidFilename, text, 0777)
     if err != nil {
 		fmt.Println("Failed to write file", pidFilename)
 		return pidFilename, false
@@ -85,10 +85,10 @@ func createPidFile(ports []int) (string, bool) {
 
 // Wait until "server" removes the file
 func waitForPidfile(filename string) bool {
-	timeout := time.Duration(10*1000)
-	check_period := time.Duration(100)	 
-	for loops := timeout/check_period;!utils.PathExists(filename) && loops > 0; loops -= 1 {
-		time.Sleep(check_period * time.Millisecond)
+	timeout := time.Duration(60) * time.Second
+	check_period := time.Duration(100) * time.Millisecond
+	for loops := timeout/check_period;utils.PathExists(filename) && loops > 0; loops -= 1 {
+		time.Sleep(check_period)
 	}	
 	return !utils.PathExists(filename)
 }
@@ -103,8 +103,8 @@ func handleResponse(text string) {
 		}	
 	}
 	// portKnockig() does not block
-	portKnocking(ports)
 	pidFilename, ok := createPidFile(ports)
+	portKnocking(ports)
 	if ok {
 		result := waitForPidfile(pidFilename)
 		if !result {

@@ -303,13 +303,13 @@ func (configuration *Configuration) httpHandlerSession(response http.ResponseWri
 		fmt.Fprintf(response, "Failed to remove all tuples for %v, tuples=%v, removed=%v, pid=%d", session, tuples, tuplesRemoved, pid)
 		return
 	}
-	fmt.Fprintf(response, "Removed tuples for session %v, pid %d", session, pid)
 	pidFilename := utils.GetPidFilename(pid)
 	if err := os.Remove(pidFilename); err != nil {
-		fmt.Fprintf(response, "Failed to remove file %s\n", pidFilename)		
+		fmt.Fprintf(response, "Failed to remove file %s %s\n", pidFilename, err)		
 	} else {
 		fmt.Fprintf(response, "File %s removed\n", pidFilename)				
 	}
+	fmt.Fprintf(response, "Removed tuples for session %v, pid %d\n", session, pid)
 }
 
 // Allocate combinations of ports (ports tuples), generate response text, update the sessions map 
