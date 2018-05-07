@@ -336,5 +336,7 @@ func main() {
 	rand.Seed((int64)(time.Millisecond))
 	var configuration *Configuration = createConfiguration() 
 	http.HandleFunc("/", configuration.httpHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := ":8080"
+	fmt.Println("Listening on", port)
+	log.Fatal(http.ListenAndServe(port, nil))
 }

@@ -59,8 +59,6 @@ func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
 	const timeout = time.Duration(5) //s
 	expirationTime := time.Now().UTC().Add(time.Second*timeout)
 	
-	knocks.mutex.Lock()
-	defer knocks.mutex.Unlock()
 	state, ok := knocks.state[pid]
 	if !ok {
 		state = &KnockingState{ []int{}, expirationTime, int(pid) } 
@@ -98,7 +96,7 @@ func bindPorts(ports []int) (listeners []net.Listener, boundPorts []int, failedT
 	if len(failedToBind) != 0 {
 		fmt.Printf("Failed to bind ports %v\n", failedToBind)		
 	}
-	fmt.Println("Bound", ports)
+	fmt.Println("Listening on", ports)
 	return listeners, boundPorts, failedToBind	
 }
 
@@ -120,7 +118,7 @@ func getPid(port int) (pid int, ok bool) {
 			 	return pid, ok
 			 }
 		} 
-		fmt.Println("Failed to match port", port, out.String())
+		fmt.Println("Failed to match port", port)
 		return 0, false		 	
 	} else {
 		fmt.Println("Failed to start nestat:", err)
@@ -169,15 +167,12 @@ func sendQueryToServer(pid int, ports []int) {
 		}		
 	} else {
 		fmt.Println("Failed to GET", urlQuery)		
-	}
-	
+	}	
 }
 
 // Goroutine which periodically checks if any knocking sequences completed
 func completeKnocks() {
-	knocks.mutex.Lock()
-	defer knocks.mutex.Unlock()
-	
+	knocks.mutex.Lock()	
 	completedKnocks := []*KnockingState{}
 	for _, state := range knocks.state {
 		if isCompleted(state) {
@@ -188,6 +183,7 @@ func completeKnocks() {
 		delete(knocks.state, state.pid)
 		sendQueryToServer(state.pid, state.ports)
 	}
+	knocks.mutex.Unlock()
 	time.Sleep(1 * time.Second)
 }
 
@@ -200,23 +196,28 @@ func handleAccept(listener net.Listener) {
 		connection, err := listener.Accept()
 		if err != nil {
 			fmt.Println("Accept failed", err)
+			continue
 		}
-		defer connection.Close()
+		knocks.mutex.Lock()
 		remoteAddress := connection.RemoteAddr()
 		// Based on https://groups.google.com/forum/#!topic/golang-nuts/JLzchxXm5Vs
 		// See also https://golang.org/ref/spec#Type_assertions
 		port := remoteAddress.(*net.TCPAddr).Port
 		pid, ok := getPid(port)
+		connection.Close()
 		if ok {			
-			fmt.Printf("New connection localPort=%d, remotePort=%d, pid=%d\n", localPort, port, pid)
+			//fmt.Printf("New connection localPort=%d, remotePort=%d, pid=%d\n", localPort, port, pid)
 			state := knocks.addKnock(pid, localPort)
 			if isCompleted(state) {
+				//fmt.Printf("Completed pid=%d\n", pid)
 				delete(knocks.state, state.pid)
 				sendQueryToServer(state.pid, state.ports)
 			}
 		} else {
 			fmt.Println("Failed to recover pid for port", port)			
 		}
+		//fmt.Println("Done port", port)			
+		knocks.mutex.Unlock()
 	}
 }
 
