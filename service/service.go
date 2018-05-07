@@ -33,6 +33,7 @@ type Knocks struct {
 	portsBase        int
 	portsRange      []int
 	failedToBind    []int
+	listeners       []net.Listener
 	boundPorts      []int
 	portsRangeSize  int
 	tolerance       int
@@ -189,9 +190,8 @@ func handleAccept(listener net.Listener) {
 
 func main() {
 	ports := getPortsToBind()
-	listeners, bound, failedToBind := bindPorts(ports)
-	knocks.boundPorts, knocks.failedToBind = bound, failedToBind
-	for _, listener := range listeners {
+	knocks.listeners, knocks.boundPorts, knocks.failedToBind = bindPorts(ports)
+	for _, listener := range knocks.listeners {
 		go handleAccept(listener)
 	}
 	go completeKnocks()
