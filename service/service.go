@@ -43,7 +43,7 @@ type knocks struct {
 	tupleSize       int
 	host            string
 	port            int
-	hostUrl         string
+	hostURL         string
 }
 
 var knocksCollection = knocks{state: make(map[int]*knockingState),
@@ -72,7 +72,7 @@ func (k *knocks) addKnock(pid int, port int) *knockingState{
 // get list of ports to bind
 func (k *knocks) getPortsToBind() []int{
 	ports := []int{}
-	for i := 0;i < k.portsRangeSize; i += 1 {
+	for i := 0;i < k.portsRangeSize; i++ {
 		ports = append(ports, k.portsBase+i)
 	}  	
 	return ports
@@ -120,10 +120,9 @@ func getPid(port int) (pid int, ok bool) {
 		} 
 		fmt.Println("Failed to match port", port)
 		return 0, false		 	
-	} else {
-		fmt.Println("Failed to start nestat:", err)
-		return 0, false		 	
-	}
+	} 
+	fmt.Println("Failed to start nestat:", err)
+	return 0, false		 	
 }
 
 // Return true if all tuples are collected or timeout
@@ -149,7 +148,7 @@ func (k *knocks) isCompleted(state *knockingState) bool {
 // ports I failed to bind 
 func (k *knocks) sendQueryToServer(pid int, ports []int) {
 	var text bytes.Buffer
-	text.WriteString(k.hostUrl) 
+	text.WriteString(k.hostURL) 
 	text.WriteString("/session?ports=")
 	for _, port := range ports {
 		text.WriteString(fmt.Sprintf("%d,", port))
@@ -229,7 +228,7 @@ func main() {
 		Scheme:   "http",
 		Host:     fmt.Sprintf("%s:%d", knocksCollection.host, knocksCollection.port),
 	}
-	knocksCollection.hostUrl = url.String()  
+	knocksCollection.hostURL = url.String()  
 	for _, listener := range knocksCollection.listeners {
 		go knocksCollection.handleAccept(listener)
 	}
