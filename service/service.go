@@ -32,6 +32,8 @@ type Knocks struct {
 	state map[int]*KnockingState
 	portsBase        int
 	portsRange      []int
+	failedToBind    []int
+	boundPorts      []int
 	portsRangeSize  int
 	tolerance       int
 }
@@ -69,14 +71,16 @@ func getPortsToBind() []int{
 }
 
 // bind the specified ports 
-func bindPorts(ports []int) []net.Listener{
-	listeners := []net.Listener{}
-	failedToBind := []int{}
+func bindPorts(ports []int) (listeners []net.Listener, boundPorts []int, failedToBind []int) {
+	listeners = []net.Listener{}
+	failedToBind = []int{}
+	boundPorts = []int{}
 	for _, port := range ports {
 		name := fmt.Sprintf(":%d", port)
 		listener, err := net.Listen("tcp", name)
 		if err == nil {
 			listeners = append(listeners, listener)
+			boundPorts = append(boundPorts, port)
 		} else {
 			failedToBind = append(failedToBind, port)
 		}
@@ -85,7 +89,7 @@ func bindPorts(ports []int) []net.Listener{
 		fmt.Printf("Failed to bind ports %v\n", failedToBind)		
 	}
 	fmt.Println("Bound", ports)
-	return listeners	
+	return listeners, boundPorts, failedToBind	
 }
 
 // I am looking for line like 
@@ -185,7 +189,8 @@ func handleAccept(listener net.Listener) {
 
 func main() {
 	ports := getPortsToBind()
-	listeners := bindPorts(ports)
+	listeners, bound, failedToBind := bindPorts(ports)
+	knocks.boundPorts, knocks.failedToBind = bound, failedToBind
 	for _, listener := range listeners {
 		go handleAccept(listener)
 	}
