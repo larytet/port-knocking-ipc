@@ -96,7 +96,7 @@ func TestParseUrlQuerySessionPid(t *testing.T) {
 	}
 	
 	for testIndex, testSet := range testSets {
-		pid, ok := parseUrlQuerySessionPid(testSet.pidStr)
+		pid, ok := parseURLQuerySessionPid(testSet.pidStr)
 		if ok != testSet.ok {
 			t.Errorf("Got ok '%t' expected '%t' for test %d\n", ok, testSet.ok, testIndex)			
 		}

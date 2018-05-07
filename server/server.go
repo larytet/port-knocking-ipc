@@ -222,12 +222,12 @@ func parseURLQuerySessionPorts(portsStr []string, tupleSize int) ([][]int, bool)
 		}
 		tupleIndex := portsCount/tupleSize
 		ports[tupleIndex] = append(ports[tupleIndex], port)
-		portsCount += 1
+		portsCount++
 	}
 	return ports, true
 }
 
-func parseUrlQuerySessionPid(pidStr []string) (int, bool) {
+func parseURLQuerySessionPid(pidStr []string) (int, bool) {
 	if len(pidStr) != 1 {
 		return 0, false 
 	}
@@ -282,7 +282,7 @@ func (c *configuration) httpHandlerSession(response http.ResponseWriter, query u
 		fmt.Fprintf(response, "Failed to parse '%s'", tuples)
 		return
 	}
-	pid, ok := parseUrlQuerySessionPid(pidStr)
+	pid, ok := parseURLQuerySessionPid(pidStr)
 	if !ok {
 		fmt.Fprintf(response, "Failed to parse '%s'", pidStr)
 		return
@@ -337,7 +337,7 @@ func (c *configuration) httpHandler(response http.ResponseWriter, request *http.
 
 func main() {
 	rand.Seed((int64)(time.Millisecond))
-	var c *configuration = createConfiguration() 
+	var c = createConfiguration() 
 	http.HandleFunc("/", c.httpHandler)
 	port := ":8080"
 	fmt.Println("Listening on", port)
