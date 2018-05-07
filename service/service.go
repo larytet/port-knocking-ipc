@@ -161,6 +161,7 @@ func handleAccept(listener net.Listener) {
 		}
 		defer connection.Close()
 		remoteAddress := connection.RemoteAddr()
+		// Based on https://groups.google.com/forum/#!topic/golang-nuts/JLzchxXm5Vs
 		port := remoteAddress.(*net.TCPAddr).Port
 		fmt.Println("New connection port", port)
 		pid, ok := getPid(port)
