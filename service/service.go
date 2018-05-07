@@ -11,6 +11,8 @@ package main
 
 import (
 	"net"
+	"net/http"
+	"net/url"
 	"fmt"
 	"flag"
 	"time"
@@ -19,6 +21,7 @@ import (
 	"bytes"
 	"strings"
 	"sync"
+	"io/ioutil"
 	"port-knocking-ipc/utils"
 )
 
@@ -38,12 +41,17 @@ type Knocks struct {
 	portsRangeSize  int
 	tolerance       int
 	tupleSize       int
+	host            string
+	port            int
+	hostUrl         string
 }
 
 var knocks = Knocks{state: make(map[int]*KnockingState),
 	portsBase : *flag.Int("port_base", 21380, "Base port number"),
 	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
 	tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
+	host : *flag.String("host", "127.0.0.1", "Server name"),
+	port : *flag.Int("port", 8080, "Server port"),
 }
 
 // Add the port to the map of knocking sequences 
@@ -143,6 +151,27 @@ func isCompleted(state *KnockingState) bool {
 // fall in the tuple's range and create all possible port tuples - combinations of collected ports and
 // ports I failed to bind 
 func sendQueryToServer(pid int, ports []int) {
+	var text bytes.Buffer
+	text.WriteString(knocks.hostUrl) 
+	text.WriteString("/session?ports=")
+	for port := range ports {
+		text.WriteString(fmt.Sprintf("%d,", port))
+	}
+	text.WriteString("&pid=")
+	text.WriteString(fmt.Sprintf("%d,", pid))
+	
+	urlQuery := text.String()
+	response, err := http.Get(urlQuery)
+	if err != nil {
+		defer response.Body.Close()
+		text, err := ioutil.ReadAll(response.Body)
+		if err == nil {
+			fmt.Printf("Got repsonse for ulr='%s': %s", urlQuery, string(text))
+		}		
+	} else {
+		fmt.Println("Failed to GET", urlQuery)		
+	}
+	
 }
 
 // Goroutine which periodically checks if any knocking sequences completed
@@ -195,10 +224,20 @@ func main() {
 	knocks.tupleSize = knocks.portsRangeSize/2
 	ports := getPortsToBind()
 	knocks.listeners, knocks.boundPorts, knocks.failedToBind = bindPorts(ports)
+	url := &url.URL{
+		Scheme:   "http",
+		Host:     fmt.Sprintf("%s:%d", knocks.host, knocks.port),
+	}
+	knocks.hostUrl = url.String()  
 	for _, listener := range knocks.listeners {
 		go handleAccept(listener)
 	}
+	
+	// Start a background thread to handle timeout expiration 
+	// of knock sequences
 	go completeKnocks()
+	
+	// Block the main thread, TODO turn to daemon
 	for {
 		time.Sleep(100 * time.Millisecond)
 	}		

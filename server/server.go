@@ -255,7 +255,7 @@ func (configuration *Configuration) findSessions(tuples [][]int) []SessionState 
 	return sessions
 }
 
-// Handle URL quries
+// Handle URL query /session?ports=...&pid=...
 func (configuration *Configuration) httpHandlerSession(response http.ResponseWriter, query url.Values) {
 	portsStr, ok := query["ports"]
 	if !ok {
