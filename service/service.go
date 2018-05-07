@@ -25,14 +25,14 @@ import (
 	"port-knocking-ipc/utils"
 )
 
-type KnockingState struct {
+type knockingState struct {
 	ports []int
 	expirationTime time.Time
 	pid int
 }
-type Knocks struct {
+type knocks struct {
 	mutex sync.Mutex
-	state map[int]*KnockingState
+	state map[int]*knockingState
 	portsBase        int
 	portsRange      []int
 	failedToBind    []int
@@ -46,7 +46,7 @@ type Knocks struct {
 	hostUrl         string
 }
 
-var knocks = Knocks{state: make(map[int]*KnockingState),
+var knocksCollection = knocks{state: make(map[int]*knockingState),
 	portsBase : *flag.Int("port_base", 21380, "Base port number"),
 	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
 	tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
@@ -55,14 +55,14 @@ var knocks = Knocks{state: make(map[int]*KnockingState),
 }
 
 // Add the port to the map of knocking sequences 
-func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
+func (k *knocks) addKnock(pid int, port int) *knockingState{
 	const timeout = time.Duration(5) //s
 	expirationTime := time.Now().UTC().Add(time.Second*timeout)
 	
-	state, ok := knocks.state[pid]
+	state, ok := k.state[pid]
 	if !ok {
-		state = &KnockingState{ []int{}, expirationTime, int(pid) } 
-		knocks.state[pid] = state 
+		state = &knockingState{ []int{}, expirationTime, int(pid) } 
+		k.state[pid] = state 
 	}
 	state.ports = append(state.ports, port)
 	state.expirationTime = expirationTime
@@ -70,10 +70,10 @@ func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
 }
 
 // get list of ports to bind
-func getPortsToBind() []int{
+func (k *knocks) getPortsToBind() []int{
 	ports := []int{}
-	for i := 0;i < knocks.portsRangeSize; i += 1 {
-		ports = append(ports, knocks.portsBase+i)
+	for i := 0;i < k.portsRangeSize; i += 1 {
+		ports = append(ports, k.portsBase+i)
 	}  	
 	return ports
 }
@@ -127,16 +127,16 @@ func getPid(port int) (pid int, ok bool) {
 }
 
 // Return true if all tuples are collected or timeout
-func isCompleted(state *KnockingState) bool {
+func (k *knocks) isCompleted(state *knockingState) bool {
 	if state.expirationTime.Before(time.Now().UTC()) {
 		return true 
 	}
 	// I want to allocate enough tuples to reach the specifed tolerance level
-	tuples := (knocks.tolerance * knocks.tupleSize)/100 + 2
-	if knocks.tolerance == 0 {
+	tuples := (k.tolerance * k.tupleSize)/100 + 2
+	if k.tolerance == 0 {
 		tuples = 1		
 	}  
-	if len(state.ports) % (tuples * knocks.tupleSize) == 0{
+	if len(state.ports) % (tuples * k.tupleSize) == 0{
 		return true
 	}
 	return false
@@ -147,9 +147,9 @@ func isCompleted(state *KnockingState) bool {
 // If a tuple is not full I check if there are ports which I failed to bind which 
 // fall in the tuple's range and create all possible port tuples - combinations of collected ports and
 // ports I failed to bind 
-func sendQueryToServer(pid int, ports []int) {
+func (k *knocks) sendQueryToServer(pid int, ports []int) {
 	var text bytes.Buffer
-	text.WriteString(knocks.hostUrl) 
+	text.WriteString(k.hostUrl) 
 	text.WriteString("/session?ports=")
 	for _, port := range ports {
 		text.WriteString(fmt.Sprintf("%d,", port))
@@ -171,25 +171,25 @@ func sendQueryToServer(pid int, ports []int) {
 }
 
 // Goroutine which periodically checks if any knocking sequences completed
-func completeKnocks() {
-	knocks.mutex.Lock()	
-	completedKnocks := []*KnockingState{}
-	for _, state := range knocks.state {
-		if isCompleted(state) {
+func (k *knocks) completeKnocks() {
+	k.mutex.Lock()	
+	completedKnocks := []*knockingState{}
+	for _, state := range k.state {
+		if k.isCompleted(state) {
 			completedKnocks = append(completedKnocks, state)
 		}
 	}
 	for _, state := range completedKnocks {
-		delete(knocks.state, state.pid)
-		sendQueryToServer(state.pid, state.ports)
+		delete(k.state, state.pid)
+		k.sendQueryToServer(state.pid, state.ports)
 	}
-	knocks.mutex.Unlock()
+	k.mutex.Unlock()
 	time.Sleep(1 * time.Second)
 }
 
 
 // Goroutine to accept incoming connection
-func handleAccept(listener net.Listener) {
+func (k *knocks) handleAccept(listener net.Listener) {
 	localPort := listener.Addr().(*net.TCPAddr).Port
 	defer listener.Close()	
 	for {
@@ -205,15 +205,15 @@ func handleAccept(listener net.Listener) {
 		pid, ok := getPid(port)
 		connection.Close()
 		if ok {			
-			knocks.mutex.Lock()
+			k.mutex.Lock()
 			//fmt.Printf("New connection localPort=%d, remotePort=%d, pid=%d\n", localPort, port, pid)
-			state := knocks.addKnock(pid, localPort)
-			if isCompleted(state) {
+			state := k.addKnock(pid, localPort)
+			if k.isCompleted(state) {
 				//fmt.Printf("Completed pid=%d\n", pid)
-				delete(knocks.state, state.pid)
-				sendQueryToServer(state.pid, state.ports)
+				delete(k.state, state.pid)
+				k.sendQueryToServer(state.pid, state.ports)
 			}
-			knocks.mutex.Unlock()
+			k.mutex.Unlock()
 		} else {
 			fmt.Println("Failed to recover pid for port", port)			
 		}
@@ -222,21 +222,21 @@ func handleAccept(listener net.Listener) {
 }
 
 func main() {
-	knocks.tupleSize = knocks.portsRangeSize/2
-	ports := getPortsToBind()
-	knocks.listeners, knocks.boundPorts, knocks.failedToBind = bindPorts(ports)
+	knocksCollection.tupleSize = knocksCollection.portsRangeSize/2
+	ports := knocksCollection.getPortsToBind()
+	knocksCollection.listeners, knocksCollection.boundPorts, knocksCollection.failedToBind = bindPorts(ports)
 	url := &url.URL{
 		Scheme:   "http",
-		Host:     fmt.Sprintf("%s:%d", knocks.host, knocks.port),
+		Host:     fmt.Sprintf("%s:%d", knocksCollection.host, knocksCollection.port),
 	}
-	knocks.hostUrl = url.String()  
-	for _, listener := range knocks.listeners {
-		go handleAccept(listener)
+	knocksCollection.hostUrl = url.String()  
+	for _, listener := range knocksCollection.listeners {
+		go knocksCollection.handleAccept(listener)
 	}
 	
 	// Start a background thread to handle timeout expiration 
 	// of knock sequences
-	go completeKnocks()
+	go knocksCollection.completeKnocks()
 	
 	// Block the main thread, TODO turn to daemon
 	for {
