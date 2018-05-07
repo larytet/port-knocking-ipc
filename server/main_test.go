@@ -17,7 +17,7 @@ func TestGenerator(t *testing.T) {
 	}	
 }
 
-func testKeyTupleConverter(t *testing.T, expectedTuple []int, expectedKey KeyId) {
+func testKeyTupleConverter(t *testing.T, expectedTuple []int, expectedKey keyID) {
 	base := uint64(1)
 	key := tupleToKey(base, expectedTuple)
 	if key != expectedKey {
@@ -31,13 +31,13 @@ func testKeyTupleConverter(t *testing.T, expectedTuple []int, expectedKey KeyId)
 
 type KeyTupleConverterTestSet struct {
 	tuple []int
-	key KeyId
+	key keyID
 }
 
 func TestKeyTupleConverter(t *testing.T) {
 	testSets := []KeyTupleConverterTestSet {
-		{[]int{2,3,4,5,6,7,8,9}, KeyId(0x0102030405060708)},
-		{[]int{1,1,1,1,1,1,1,1}, KeyId(0x0000000000000000)},
+		{[]int{2,3,4,5,6,7,8,9}, keyID(0x0102030405060708)},
+		{[]int{1,1,1,1,1,1,1,1}, keyID(0x0000000000000000)},
 	}
 	
 	for _, testSet := range testSets {
