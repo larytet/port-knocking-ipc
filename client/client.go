@@ -102,8 +102,9 @@ func handleResponse(text string) {
 			ports = append(ports, port)
 		}	
 	}
-	// portKnockig() does not block
+	// First thing create a PID file
 	pidFilename, ok := createPidFile(ports)
+	// portKnockig() does not block
 	portKnocking(ports)
 	if ok {
 		result := waitForPidfile(pidFilename)
