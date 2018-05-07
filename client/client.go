@@ -21,17 +21,22 @@ import (
 // Send HTTP GET to the host
 // Blocking
 func knock(host string) {
-	response, err := http.Get(host)	
+	timeout := time.Duration(100 * time.Millisecond)
+	client := http.Client {
+	    Timeout: timeout,
+	}	
+	response, err := client.Get(host)	
 	if err == nil {
+		fmt.Println("Connection unexpectedly succeeded")
 		defer response.Body.Close()
-		text, err := ioutil.ReadAll(response.Body)
-		if err == nil {
-			fmt.Println(text)			
-		} else {
-			fmt.Println(err)			
-		}
+//		text, err := ioutil.ReadAll(response.Body)
+//		if err == nil {
+//			fmt.Println(text)			
+//		} else {
+//			fmt.Println(err)			
+//		}
 	} else {
-		fmt.Println(err)
+//		fmt.Println(err)
 	}	
 } 
 
