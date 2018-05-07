@@ -54,7 +54,9 @@ func MakeRange(start, count int) []int {
 }
 
 // Max returns the maximum of two arguments
+// Golang is capable of comparing only floating point numbers
 // See https://stackoverflow.com/questions/27516387/what-is-the-correct-way-to-find-the-min-between-two-integers-in-go
+// https://mrekucci.blogspot.co.il/2015/07/dont-abuse-mathmax-mathmin.html
 func Max(x, y int) int {
     if x > y {
         return x
