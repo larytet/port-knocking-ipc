@@ -30,9 +30,16 @@ type KnockingState struct {
 type Knocks struct {
 	mutex sync.Mutex
 	state map[int]*KnockingState
+	portsBase        int
+	portsRange      []int
+	portsRangeSize  int
+	tolerance       int
 }
 
-var knocks = Knocks{state: make(map[int]*KnockingState)}
+var knocks = Knocks{state: make(map[int]*KnockingState),
+	portsBase : *flag.Int("port_base", 21380, "Base port number"),
+	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
+}
 
 // Add the port to the map of knocking sequences 
 func (knocks *Knocks) addKnock(pid int, port int) *KnockingState{
