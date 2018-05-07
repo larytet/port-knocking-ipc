@@ -41,7 +41,7 @@ func knock(host string) {
 // on the ascending order of ports in a tuple
 // An alternative is to use one port as a "frame start" signal  
 func portKnocking(ports []int) {
-	for port := range ports {
+	for _, port := range ports {
 		host := fmt.Sprintf("http://127.0.0.1:%d", port)
 		knock(host)
 	}	
