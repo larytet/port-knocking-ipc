@@ -44,7 +44,6 @@ var knocks = Knocks{state: make(map[int]*KnockingState),
 	portsBase : *flag.Int("port_base", 21380, "Base port number"),
 	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
 	tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
-	tupleSize : *flag.Int("port_range", 10, "Size of the ports range")/2,
 }
 
 // Add the port to the map of knocking sequences 
@@ -190,6 +189,7 @@ func handleAccept(listener net.Listener) {
 }
 
 func main() {
+	knocks.tupleSize = knocks.portsRangeSize/2
 	ports := getPortsToBind()
 	knocks.listeners, knocks.boundPorts, knocks.failedToBind = bindPorts(ports)
 	for _, listener := range knocks.listeners {
