@@ -13,7 +13,7 @@ Some applications:
 * Getting system settings 
 * Modifying the local system via SaaS 
 
-The server generates a combination of ports from a predefined port range. The server generates an HTML page which establishes connections to the WEB server running on the local host (127.0.0.1). The service listens for the connection attempts, sorts the "knocks" by process ID, figures out UID/GID of the connecting applications. The service closes the connections. The service sends the collected "knocks" to the server with the required information. The server can response with further instructions. 
+The server generates a combination of ports from a predefined port range. The server generates an HTML page which establishes connections to the WEB server running on the local host (127.0.0.1). The service listens for the connection attempts, sorts the "knocks" by process ID, figures out UID/GID of the connecting applications. The service closes the connections. The service sends the collected "knocks" to the server with the required information - user ID, system information. The server can response with further instructions. 
 
 ## Alternative solutions
 
