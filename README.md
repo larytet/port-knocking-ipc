@@ -139,4 +139,4 @@ The end points send the following responses to the server
 * https://stackoverflow.com/questions/49978730/reliable-delivery-of-information-between-a-browser-and-a-locally-run-service-usi
 * https://stackoverflow.com/questions/10125881/send-a-message-from-javascript-running-in-a-browser-to-a-windows-batch-file
 * http://kb.mozillazine.org/Register_protocol
-
+* https://blog.voina.org/setup-eclipse-as-go-ide-in-linux/
