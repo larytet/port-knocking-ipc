@@ -139,6 +139,7 @@ func (k *knocks) isCompleted(state *knockingState) bool {
 	return false
 }
 
+// Choose randomly ports to emulate failure of port bind
 func blockPorts(ports []int, portsToSkipCount int) ([]int, []int) {
 	portsToSkip := []int{}
 	for i := 0;i < portsToSkipCount;i++ {
