@@ -24,6 +24,7 @@ import (
     "math/rand"
 	"io/ioutil"
 	"port-knocking-ipc/utils"
+	"port-knocking-ipc/utils/combinations"
 )
 
 type knockingState struct {
@@ -148,6 +149,24 @@ func blockPorts(ports []int, portsToSkipCount int) ([]int, []int) {
 		ports = utils.RemoveElementFromSlice(ports, port) 
 	}
 	return ports, portsToSkip
+}
+
+func getTuples(ports, failedToBind []int, tupleSize int) [][]int {
+	lastPort := -1
+	tuple := []int{}
+	for port := range ports {
+		if port > lastPort {
+			tuple = append(tuple, port)
+		} else {
+			if len(tuple) < tupleSize {
+				state := combinations.Init(append(tuple, failedToBind...), tupleSize)
+				state.Next()				
+			}
+		}
+	
+		lastPort = port
+	}	
+	return nil
 }
 
 // Send "/session?ports=...&pid=..." to the server
