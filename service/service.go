@@ -151,6 +151,8 @@ func blockPorts(ports []int, portsToSkipCount int) ([]int, []int) {
 	return ports, portsToSkip
 }
 
+// getTuples generates all possible combinations of collected ports and failed to bind ports 
+// If I bind all ports the getTuples returns the original ports divided into tuples  
 func getTuples(ports, failedToBind []int, tupleSize int) [][]int {
 	lastPort := -1
 	tuple := []int{}
