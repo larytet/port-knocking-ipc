@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"strings"
 	"sync"
+    "math/rand"
 	"io/ioutil"
 	"port-knocking-ipc/utils"
 )
@@ -35,6 +36,7 @@ type knocks struct {
 	state map[int]*knockingState
 	portsBase        int
 	portsRange      []int
+	portsToSkip     int
 	failedToBind    []int
 	listeners       []net.Listener
 	boundPorts      []int
@@ -49,6 +51,7 @@ type knocks struct {
 var knocksCollection = knocks{state: make(map[int]*knockingState),
 	portsBase : *flag.Int("port_base", 21380, "Base port number"),
 	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
+	portsToSkip : *flag.Int("skip_ports", 1, "Nummber of ports to skip"),
 	tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
 	host : *flag.String("host", "127.0.0.1", "Server name"),
 	port : *flag.Int("port", 8080, "Server port"),
@@ -79,7 +82,7 @@ func (k *knocks) getPortsToBind() []int{
 }
 
 // bind the specified ports 
-func bindPorts(ports []int) (listeners []net.Listener, boundPorts []int, failedToBind []int) {
+func bindPorts(ports, portsToSkip []int) (listeners []net.Listener, boundPorts []int, failedToBind []int) {
 	listeners = []net.Listener{}
 	failedToBind = []int{}
 	boundPorts = []int{}
@@ -93,6 +96,7 @@ func bindPorts(ports []int) (listeners []net.Listener, boundPorts []int, failedT
 			failedToBind = append(failedToBind, port)
 		}
 	}
+	failedToBind = append(failedToBind, portsToSkip...)
 	if len(failedToBind) != 0 {
 		fmt.Printf("Failed to bind ports %v\n", failedToBind)		
 	}
@@ -140,6 +144,16 @@ func (k *knocks) isCompleted(state *knockingState) bool {
 		return true
 	}
 	return false
+}
+
+func blockPorts(ports []int, portsToSkipCount int) ([]int, []int) {
+	portsToSkip := []int{}
+	for i := 0;i < portsToSkipCount;i++ {
+		port := rand.Intn(len(ports))
+		portsToSkip = append(portsToSkip, ports[port])
+		ports = utils.RemoveElementFromSlice(ports, port) 
+	}
+	return ports, portsToSkip
 }
 
 // Send "/session?ports=...&pid=..." to the server
@@ -224,10 +238,12 @@ func (k *knocks) handleAccept(listener net.Listener) {
 }
 
 func main() {
+	utils.InitRand()
 	flag.Parse()
 	knocksCollection.tupleSize = utils.GetTupleSize(knocksCollection.portsRangeSize)
 	ports := knocksCollection.getPortsToBind()
-	knocksCollection.listeners, knocksCollection.boundPorts, knocksCollection.failedToBind = bindPorts(ports)
+	ports, portsToSkip := blockPorts(ports, knocksCollection.portsToSkip)
+	knocksCollection.listeners, knocksCollection.boundPorts, knocksCollection.failedToBind = bindPorts(ports, portsToSkip)
 	url := &url.URL{
 		Scheme:   "http",
 		Host:     fmt.Sprintf("%s:%d", knocksCollection.host, knocksCollection.port),

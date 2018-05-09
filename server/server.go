@@ -331,8 +331,8 @@ func (c *configuration) httpHandler(response http.ResponseWriter, request *http.
 }
 
 func main() {
+	utils.InitRand()
 	flag.Parse()
-	rand.Seed((int64)(time.Millisecond))
 	var c = createConfiguration() 
 	http.HandleFunc("/", c.httpHandler)
 	port := ":8080"

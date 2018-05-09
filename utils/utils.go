@@ -5,6 +5,8 @@ import (
 	"strings"
 	"os"
 	"fmt"
+	"time"
+    "math/rand"
 	"runtime/debug"
 )
 
@@ -142,3 +144,12 @@ func GetTuplesCount(tolerance int, tupleSize int) int {
 	return tuplesCount
 }
 
+// InitRand calls to math.rand.Seed()
+func InitRand() {
+	rand.Seed((int64)(time.Now().UnixNano()))	
+}
+
+// RemoveElementFromSlice removes the specified element from the slice
+func RemoveElementFromSlice(a []int, index int) []int {
+	return append(a[:index], a[index+1:]...)	
+}
