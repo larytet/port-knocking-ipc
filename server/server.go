@@ -331,6 +331,7 @@ func (c *configuration) httpHandler(response http.ResponseWriter, request *http.
 }
 
 func main() {
+	flag.Parse()
 	rand.Seed((int64)(time.Millisecond))
 	var c = createConfiguration() 
 	http.HandleFunc("/", c.httpHandler)

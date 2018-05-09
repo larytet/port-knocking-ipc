@@ -224,6 +224,7 @@ func (k *knocks) handleAccept(listener net.Listener) {
 }
 
 func main() {
+	flag.Parse()
 	knocksCollection.tupleSize = utils.GetTupleSize(knocksCollection.portsRangeSize)
 	ports := knocksCollection.getPortsToBind()
 	knocksCollection.listeners, knocksCollection.boundPorts, knocksCollection.failedToBind = bindPorts(ports)
