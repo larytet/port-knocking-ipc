@@ -69,10 +69,14 @@ type configuration struct {
 
 // Setup the server configuration accrding to the command line options
 func createConfiguration() *configuration   {
+	portsBase := flag.Int("port_base", 21380, "Base port number")
+	portsRangeSize := flag.Int("port_range", 10, "Size of the ports range")
+	tolerance := flag.Int("tolerance", 20, "Percent of tolerance for port bind failures")
+	flag.Parse()
 	c := configuration{
-		portsBase : *flag.Int("port_base", 21380, "Base port number"),
-		portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
-		tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
+		portsBase : *portsBase,
+		portsRangeSize : *portsRangeSize,
+		tolerance : *tolerance,
 		lastSessionID : sessionID(0),
 		mapSessions : make(map[sessionID]sessionState),        
 		mapTuples : make(map[keyID]sessionID),

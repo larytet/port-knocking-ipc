@@ -48,14 +48,7 @@ type knocks struct {
 	hostURL         string
 }
 
-var knocksCollection = knocks{state: make(map[int]*knockingState),
-	portsBase : *flag.Int("port_base", 21380, "Base port number"),
-	portsRangeSize : *flag.Int("port_range", 10, "Size of the ports range"),
-	portsToSkip : *flag.Int("skip_ports", 1, "Nummber of ports to skip"),
-	tolerance : *flag.Int("tolerance", 20, "Percent of tolerance for port bind failures"),
-	host : *flag.String("host", "127.0.0.1", "Server name"),
-	port : *flag.Int("port", 8080, "Server port"),
-}
+var knocksCollection knocks
 
 // Add the port to the map of knocking sequences 
 func (k *knocks) addKnock(pid int, port int) *knockingState{
@@ -239,7 +232,21 @@ func (k *knocks) handleAccept(listener net.Listener) {
 
 func main() {
 	utils.InitRand()
+	portBase := flag.Int("port_base", 21380, "Base port number")
+	portRange := flag.Int("port_range", 10, "Size of the ports range")
+	skipPorts := flag.Int("skip_ports", 1, "Nummber of ports to skip")
+	tolerance := flag.Int("tolerance", 20, "Percent of tolerance for port bind failures")
+	host := flag.String("host", "127.0.0.1", "Server name")
+	port := flag.Int("port", 8080, "Server port")
 	flag.Parse()
+	knocksCollection = knocks{state: make(map[int]*knockingState),
+		portsBase : *portBase,
+		portsRangeSize : *portRange,
+		portsToSkip : *skipPorts,
+		tolerance : *tolerance,
+		host : *host,
+		port : *port,
+	}
 	knocksCollection.tupleSize = utils.GetTupleSize(knocksCollection.portsRangeSize)
 	ports := knocksCollection.getPortsToBind()
 	ports, portsToSkip := blockPorts(ports, knocksCollection.portsToSkip)

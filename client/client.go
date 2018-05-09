@@ -116,9 +116,10 @@ func handleResponse(text string) {
 
 func main() {
 	flag.Parse()
-	host := *flag.String("host", "127.0.0.1", "Server name")
-	port := *flag.Int("port", 8080, "Server port")
-	host = fmt.Sprintf("%s:%d", host, port)  
+	hostRef := flag.String("host", "127.0.0.1", "Server name")
+	portRef := flag.Int("port", 8080, "Server port")
+	flag.Parse()
+	host := fmt.Sprintf("%s:%d", *hostRef, *portRef)  
 	url := &url.URL{
 		Scheme:   "http",
 		Host:     host,
