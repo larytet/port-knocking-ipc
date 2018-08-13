@@ -153,3 +153,22 @@ func InitRand() {
 func RemoveElementFromSlice(a []int, index int) []int {
 	return append(a[:index], a[index+1:]...)	
 }
+
+
+// Reflection based loop which prints all fields in the statistics
+func StatisticsPrintf(data interface{}, columns int, format string) string {
+	t := reflect.TypeOf(data)
+	v := reflect.ValueOf(data)
+	if format == "" {
+		format = "%-24s %9d "
+	}
+	var buffer bytes.Buffer
+	for i := 0; i < v.NumField(); i++ {
+		if i%columns == 0 {
+			buffer.WriteString("\n")
+		}
+		buffer.WriteString(fmt.Sprintf(format, t.Field(i).Name, v.Field(i)))
+	}
+
+	return buffer.String()
+}
